@@ -1,0 +1,10 @@
+@import "../variables/base";
+@import "../mixins/coloring";
+
+#{$selector-wrapper-body} {
+    // colors
+    @each $color-key, $color-value in $color_lists_array {
+        @include coloring-base($color-key, $color-value);
+    }
+}
+

@@ -1,0 +1,248 @@
+@import "../variables/colors";
+@import "../variables/base";
+
+:root {
+    --pentagonal-red-50: #{$color-red-50};
+    --pentagonal-red-100: #{$color-red-100};
+    --pentagonal-red-200: #{$color-red-200};
+    --pentagonal-red-300: #{$color-red-300};
+    --pentagonal-red-400: #{$color-red-400};
+    --pentagonal-red-500: #{$color-red-500};
+    --pentagonal-red-600: #{$color-red-600};
+    --pentagonal-red-700: #{$color-red-700};
+    --pentagonal-red-800: #{$color-red-800};
+    --pentagonal-red-900: #{$color-red-900};
+    --pentagonal-red-950: #{$color-red-950};
+
+    --pentagonal-green-50: #{$color-green-50};
+    --pentagonal-green-100: #{$color-green-100};
+    --pentagonal-green-200: #{$color-green-200};
+    --pentagonal-green-300: #{$color-green-300};
+    --pentagonal-green-400: #{$color-green-400};
+    --pentagonal-green-500: #{$color-green-500};
+    --pentagonal-green-600: #{$color-green-600};
+    --pentagonal-green-700: #{$color-green-700};
+    --pentagonal-green-800: #{$color-green-800};
+    --pentagonal-green-900: #{$color-green-900};
+    --pentagonal-green-950: #{$color-green-950};
+
+    --pentagonal-blue-50: #{$color-blue-50};
+    --pentagonal-blue-100: #{$color-blue-100};
+    --pentagonal-blue-200: #{$color-blue-200};
+    --pentagonal-blue-300: #{$color-blue-300};
+    --pentagonal-blue-400: #{$color-blue-400};
+    --pentagonal-blue-500: #{$color-blue-500};
+    --pentagonal-blue-600: #{$color-blue-600};
+    --pentagonal-blue-700: #{$color-blue-700};
+    --pentagonal-blue-800: #{$color-blue-800};
+    --pentagonal-blue-900: #{$color-blue-900};
+    --pentagonal-blue-950: #{$color-blue-950};
+
+    --pentagonal-yellow-50: #{$color-yellow-50};
+    --pentagonal-yellow-100: #{$color-yellow-100};
+    --pentagonal-yellow-200: #{$color-yellow-200};
+    --pentagonal-yellow-300: #{$color-yellow-300};
+    --pentagonal-yellow-400: #{$color-yellow-400};
+    --pentagonal-yellow-500: #{$color-yellow-500};
+    --pentagonal-yellow-600: #{$color-yellow-600};
+    --pentagonal-yellow-700: #{$color-yellow-700};
+    --pentagonal-yellow-800: #{$color-yellow-800};
+    --pentagonal-yellow-900: #{$color-yellow-900};
+    --pentagonal-yellow-950: #{$color-yellow-950};
+
+    --pentagonal-gray-50: #{$color-gray-50};
+    --pentagonal-gray-100: #{$color-gray-100};
+    --pentagonal-gray-200: #{$color-gray-200};
+    --pentagonal-gray-300: #{$color-gray-300};
+    --pentagonal-gray-400: #{$color-gray-400};
+    --pentagonal-gray-500: #{$color-gray-500};
+    --pentagonal-gray-600: #{$color-gray-600};
+    --pentagonal-gray-700: #{$color-gray-700};
+    --pentagonal-gray-800: #{$color-gray-800};
+    --pentagonal-gray-900: #{$color-gray-900};
+    --pentagonal-gray-950: #{$color-gray-950};
+
+    --pentagonal-orange-50: #{$color-orange-50};
+    --pentagonal-orange-100: #{$color-orange-100};
+    --pentagonal-orange-200: #{$color-orange-200};
+    --pentagonal-orange-300: #{$color-orange-300};
+    --pentagonal-orange-400: #{$color-orange-400};
+    --pentagonal-orange-500: #{$color-orange-500};
+    --pentagonal-orange-600: #{$color-orange-600};
+    --pentagonal-orange-700: #{$color-orange-700};
+    --pentagonal-orange-800: #{$color-orange-800};
+    --pentagonal-orange-900: #{$color-orange-900};
+    --pentagonal-orange-950: #{$color-orange-950};
+
+    --pentagonal-purple-50: #{$color-purple-50};
+    --pentagonal-purple-100: #{$color-purple-100};
+    --pentagonal-purple-200: #{$color-purple-200};
+    --pentagonal-purple-300: #{$color-purple-300};
+    --pentagonal-purple-400: #{$color-purple-400};
+    --pentagonal-purple-500: #{$color-purple-500};
+    --pentagonal-purple-600: #{$color-purple-600};
+    --pentagonal-purple-700: #{$color-purple-700};
+    --pentagonal-purple-800: #{$color-purple-800};
+    --pentagonal-purple-900: #{$color-purple-900};
+    --pentagonal-purple-950: #{$color-purple-950};
+
+    --pentagonal-pink-50: #{$color-pink-50};
+    --pentagonal-pink-100: #{$color-pink-100};
+    --pentagonal-pink-200: #{$color-pink-200};
+    --pentagonal-pink-300: #{$color-pink-300};
+    --pentagonal-pink-400: #{$color-pink-400};
+    --pentagonal-pink-500: #{$color-pink-500};
+    --pentagonal-pink-600: #{$color-pink-600};
+    --pentagonal-pink-700: #{$color-pink-700};
+    --pentagonal-pink-800: #{$color-pink-800};
+    --pentagonal-pink-900: #{$color-pink-900};
+    --pentagonal-pink-950: #{$color-pink-950};
+    --pentagonal-cyan-50: #{$color-cyan-50};
+    --pentagonal-cyan-100: #{$color-cyan-100};
+    --pentagonal-cyan-200: #{$color-cyan-200};
+    --pentagonal-cyan-300: #{$color-cyan-300};
+    --pentagonal-cyan-400: #{$color-cyan-400};
+    --pentagonal-cyan-500: #{$color-cyan-500};
+    --pentagonal-cyan-600: #{$color-cyan-600};
+    --pentagonal-cyan-700: #{$color-cyan-700};
+    --pentagonal-cyan-800: #{$color-cyan-800};
+    --pentagonal-cyan-900: #{$color-cyan-900};
+    --pentagonal-cyan-950: #{$color-cyan-950};
+
+    --pentagonal-teal-50: #{$color-teal-50};
+    --pentagonal-teal-100: #{$color-teal-100};
+    --pentagonal-teal-200: #{$color-teal-200};
+    --pentagonal-teal-300: #{$color-teal-300};
+    --pentagonal-teal-400: #{$color-teal-400};
+    --pentagonal-teal-500: #{$color-teal-500};
+    --pentagonal-teal-600: #{$color-teal-600};
+    --pentagonal-teal-700: #{$color-teal-700};
+    --pentagonal-teal-800: #{$color-teal-800};
+    --pentagonal-teal-900: #{$color-teal-900};
+    --pentagonal-teal-950: #{$color-teal-950};
+
+    --pentagonal-lime-50: #{$color-lime-50};
+    --pentagonal-lime-100: #{$color-lime-100};
+    --pentagonal-lime-200: #{$color-lime-200};
+    --pentagonal-lime-300: #{$color-lime-300};
+    --pentagonal-lime-400: #{$color-lime-400};
+    --pentagonal-lime-500: #{$color-lime-500};
+    --pentagonal-lime-600: #{$color-lime-600};
+    --pentagonal-lime-700: #{$color-lime-700};
+    --pentagonal-lime-800: #{$color-lime-800};
+    --pentagonal-lime-900: #{$color-lime-900};
+    --pentagonal-lime-950: #{$color-lime-950};
+
+    --pentagonal-magenta-50: #{$color-magenta-50};
+    --pentagonal-magenta-100: #{$color-magenta-100};
+    --pentagonal-magenta-200: #{$color-magenta-200};
+    --pentagonal-magenta-300: #{$color-magenta-300};
+    --pentagonal-magenta-400: #{$color-magenta-400};
+    --pentagonal-magenta-500: #{$color-magenta-500};
+    --pentagonal-magenta-600: #{$color-magenta-600};
+    --pentagonal-magenta-700: #{$color-magenta-700};
+    --pentagonal-magenta-800: #{$color-magenta-800};
+    --pentagonal-magenta-900: #{$color-magenta-900};
+    --pentagonal-magenta-950: #{$color-magenta-950};
+
+    --pentagonal-white: #{$color-white};
+    --pentagonal-black: #{$color-black};
+    --pentagonal-transparent: transparent;
+}
+:root {
+    --pentagonal-link-color: var(--pentagonal-transparent);
+    --pentagonal-link-hover-color: var(--pentagonal-transparent);
+    --pentagonal-link-text-color: var(--pentagonal-blue-600);
+    --pentagonal-link-text-hover-color: var(--pentagonal-blue-800);
+    --pentagonal-link-border-color: var(--pentagonal-transparent);
+    --pentagonal-link-border-hover-color: var(--pentagonal-transparent);
+    --pentagonal-link-border-focus-color: var(--pentagonal-transparent);
+    --pentagonal-link-link-color: var(--pentagonal-blue-700);
+    --pentagonal-link-link-hover-color: var(--pentagonal-blue-800);
+
+    --pentagonal-primary-color: var(--pentagonal-cyan-500);
+    --pentagonal-primary-hover-color: var(--pentagonal-cyan-600);
+    --pentagonal-primary-text-color: var(--pentagonal-cyan-50);
+    --pentagonal-primary-text-hover-color: var(--pentagonal-cyan-50);
+    --pentagonal-primary-border-color: var(--pentagonal-cyan-500);
+    --pentagonal-primary-border-hover-color: var(--pentagonal-cyan-600);
+    --pentagonal-primary-border-focus-color: var(--pentagonal-cyan-600);
+    --pentagonal-primary-link-color: var(--pentagonal-cyan-700);
+    --pentagonal-primary-link-hover-color: var(--pentagonal-cyan-800);
+
+    --pentagonal-secondary-color: var(--pentagonal-gray-500);
+    --pentagonal-secondary-hover-color: var(--pentagonal-gray-600);
+    --pentagonal-secondary-text-color: var(--pentagonal-gray-900);
+    --pentagonal-secondary-text-hover-color: var(--pentagonal-gray-900);
+    --pentagonal-secondary-border-color: var(--pentagonal-gray-500);
+    --pentagonal-secondary-border-hover-color: var(--pentagonal-gray-600);
+    --pentagonal-secondary-border-focus-color: var(--pentagonal-gray-600);
+    --pentagonal-secondary-link-color: var(--pentagonal-gray-700);
+    --pentagonal-secondary-link-hover-color: var(--pentagonal-gray-800);
+
+    --pentagonal-success-color: var(--pentagonal-lime-500);
+    --pentagonal-success-hover-color: var(--pentagonal-lime-600);
+    --pentagonal-success-text-color: var(--pentagonal-lime-100);
+    --pentagonal-success-text-hover-color: var(--pentagonal-lime-100);
+    --pentagonal-success-border-color: var(--pentagonal-lime-500);
+    --pentagonal-success-border-hover-color: var(--pentagonal-lime-600);
+    --pentagonal-success-border-focus-color: var(--pentagonal-lime-600);
+    --pentagonal-success-link-color: var(--pentagonal-lime-700);
+    --pentagonal-success-link-hover-color: var(--pentagonal-lime-800);
+
+    --pentagonal-info-color: var(--pentagonal-cyan-500);
+    --pentagonal-info-hover-color: var(--pentagonal-cyan-600);
+    --pentagonal-info-text-color: var(--pentagonal-gray-100);
+    --pentagonal-info-text-hover-color: var(--pentagonal-gray-100);
+    --pentagonal-info-border-color: var(--pentagonal-cyan-500);
+    --pentagonal-info-border-hover-color: var(--pentagonal-cyan-600);
+    --pentagonal-info-border-focus-color: var(--pentagonal-cyan-600);
+    --pentagonal-info-link-color: var(--pentagonal-cyan-700);
+    --pentagonal-info-link-hover-color: var(--pentagonal-cyan-800);
+
+    --pentagonal-warning-color: var(--pentagonal-yellow-500);
+    --pentagonal-warning-hover-color: var(--pentagonal-yellow-600);
+    --pentagonal-warning-text-color: var(--pentagonal-gray-100);
+    --pentagonal-warning-text-hover-color: var(--pentagonal-gray-100);
+    --pentagonal-warning-border-color: var(--pentagonal-yellow-500);
+    --pentagonal-warning-border-hover-color: var(--pentagonal-yellow-600);
+    --pentagonal-warning-border-focus-color: var(--pentagonal-yellow-600);
+    --pentagonal-warning-link-color: var(--pentagonal-yellow-700);
+    --pentagonal-warning-link-hover-color: var(--pentagonal-yellow-800);
+
+    --pentagonal-danger-color: var(--pentagonal-red-500);
+    --pentagonal-danger-hover-color: var(--pentagonal-red-600);
+    --pentagonal-danger-text-color: var(--pentagonal-gray-100);
+    --pentagonal-danger-text-hover-color: var(--pentagonal-gray-100);
+    --pentagonal-danger-border-color: var(--pentagonal-red-500);
+    --pentagonal-danger-border-hover-color: var(--pentagonal-red-600);
+    --pentagonal-danger-border-focus-color: var(--pentagonal-red-600);
+
+    --pentagonal-light-color: var(--pentagonal-gray-100);
+    --pentagonal-light-hover-color: var(--pentagonal-gray-200);
+    --pentagonal-light-text-color: var(--pentagonal-gray-900);
+    --pentagonal-light-text-hover-color: var(--pentagonal-gray-900);
+    --pentagonal-light-border-color: var(--pentagonal-gray-200);
+    --pentagonal-light-border-hover-color: var(--pentagonal-gray-300);
+    --pentagonal-light-border-focus-color: var(--pentagonal-gray-300);
+
+    --pentagonal-white-color: var(--pentagonal-white);
+    --pentagonal-white-hover-color: var(--pentagonal-gray-100);
+    --pentagonal-white-text-color: var(--pentagonal-gray-900);
+    --pentagonal-white-text-hover-color: var(--pentagonal-gray-900);
+    --pentagonal-white-border-color: var(--pentagonal-gray-100);
+    --pentagonal-white-border-hover-color: var(--pentagonal-gray-200);
+    --pentagonal-white-border-focus-color: var(--pentagonal-gray-200);
+
+    --pentagonal-base-font-family: #{$base-font-family};
+    --pentagonal-base-font-size: #{$base-font-size};
+    --pentagonal-base-font-weight: #{$base-font-weight};
+    --pentagonal-base-line-height: #{$base-line-height};
+    --pentagonal-base-border-radius: #{$base-border-radius};
+    --pentagonal-base-code-font-family: #{$base-mono-family};
+    --pentagonal-base-code-font-size: .875rem;
+    --pentagonal-base-body-bg-color: var(--pentagonal-gray-50);
+    --pentagonal-base-body-text-color: var(--pentagonal-gray-900);
+    --pentagonal-base-body-link-color: var(--pentagonal-blue-700);
+    --pentagonal-base-body-link-hover-color: var(--pentagonal-blue-800);
+}

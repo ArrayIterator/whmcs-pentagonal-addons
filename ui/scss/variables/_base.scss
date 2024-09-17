@@ -1,0 +1,36 @@
+@import "./colors";
+$base-font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica Neue, Arial, Noto Sans, Liberation Sans, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+$base-mono-family: SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+$base-font-size: 14px;
+$base-font-weight: 400;
+$base-line-height: 1.5;
+$base-border-radius: 0.25rem;
+
+$color-primary: $color-blue-500;
+$color-secondary: $color-gray-600;
+$color-success: $color-green-500;
+$color-info: $color-blue-500;
+$color-warning: $color-yellow-500;
+$color-danger: $color-red-500;
+$color-light: $color-gray-100;
+$color-dark: $color-gray-800;
+$color-white: #fff;
+$color-link: $color-blue-500;
+
+$color_lists_array: (
+    primary: $color-primary,
+    secondary: $color-secondary,
+    success: $color-success,
+    info: $color-info,
+    warning: $color-warning,
+    danger: $color-danger,
+    'light': $color-light,
+    'dark': $color-dark,
+    'white': $color-white,
+    link: $color-link
+);
+
+$selector-identity: '#pentagonal-addon-section';
+$selector-container: '.pentagonal-addon-container';
+$selector-wrapper-body: "body:has(#{$selector-identity})";
+$selector-div: "div:has(#{$selector-identity})";

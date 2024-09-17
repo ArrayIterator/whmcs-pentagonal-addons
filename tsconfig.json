@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./ui",
+    "noImplicitAny": true,
+    "target": "ES6",
+    "module": "ES2020",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ESNext",
+      "dom"
+    ]
+  }
+}

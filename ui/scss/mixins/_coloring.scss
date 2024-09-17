@@ -1,0 +1,68 @@
+@use 'sass:color';
+@import "../variables/colors";
+
+@mixin coloring-base($name, $color) {
+    .bg-#{$name} {
+        color: var(--pentagonal-#{$name}-text-color);
+        background-color: var(--pentagonal-#{$name}-color);
+    }
+    .btn-#{$name}:not(:disabled):not(.disabled):active:focus,
+    .btn-#{$name}:not(:disabled):not(.disabled).active:focus,
+    .show > .btn-#{$name}.dropdown-toggle:focus {
+        box-shadow: none;
+        background-color: var(--pentagonal-#{$name}-hover-color);
+        color: var(--pentagonal-#{$name}-text-hover-color);
+        border-color: var(--pentagonal-#{$name}-border-focus-color);
+    }
+
+    .btn-#{$name} {
+        &, &.btn {
+            box-shadow: none;
+            color: var(--pentagonal-#{$name}-text-color);
+            background-color: var(--pentagonal-#{$name}-color);
+            border-color: var(--pentagonal-#{$name}-border-color);
+            &:hover {
+                background-color: var(--pentagonal-#{$name}-hover-color);
+                color: var(--pentagonal-#{$name}-text-hover-color);
+                border-color: var(--pentagonal-#{$name}-border-hover-color);
+            }
+        }
+    }
+    .btn-outline-#{$name} {
+        &, &.btn {
+            color: var(--pentagonal-#{$name}-color);
+            border-color: var(--pentagonal-#{$name}-color);
+
+            &:hover {
+                color: var(--pentagonal-#{$name}-hover-color);
+                border-color: var(--pentagonal-#{$name}-hover-color);
+            }
+        }
+    }
+    .btn-outline-transparent-#{$name} {
+        &, &.btn {
+
+            color: var(--pentagonal-#{$name}-color);
+            border-color: transparent;
+
+            &:hover {
+                color: var(--pentagonal-#{$name}-hover-color);
+                border-color: var(--pentagonal-#{$name}-hover-color);
+            }
+        }
+    }
+    .alert-#{$name} {
+        $color-alpha: color.adjust($color, $alpha: -.85);
+        color: unset;
+        border: none;
+        border-radius: 0;
+        border-left: 4px solid var(--pentagonal-#{$name}-color);
+        background-color: $color-alpha;
+        .alert-link {
+            color: var(--pentagonal-#{$name}-link-color);
+            &:hover {
+                color: var(--pentagonal-#{$name}-link-hover-color);
+            }
+        }
+    }
+}

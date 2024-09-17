@@ -1,0 +1,8 @@
+stubs/          export-ignore
+bin/            export-ignore
+ui/            export-ignore
+.gitattributes  export-ignore
+vendor/         export-ignore
+phpcs.xml       export-ignore
+composer.json   export-ignore
+README.md       export-ignore

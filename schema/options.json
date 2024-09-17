@@ -1,0 +1,724 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "Options Schema",
+    "title": "Schema for options",
+    "additionalProperties": false,
+    "type": "object",
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "The URL of the schema"
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the theme"
+        },
+        "version": {
+            "type": "string",
+            "description": "The version of the theme"
+        },
+        "author": {
+            "type": "string",
+            "description": "The author of the theme"
+        },
+        "date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date the schema was created"
+        },
+        "updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The date the schema was last updated"
+        },
+        "description": {
+            "type": "string",
+            "description": "A brief description of the schema"
+        },
+        "settings": {
+            "type": "object",
+            "description": "The settings for the schema",
+            "additionalProperties": {
+                "$ref": "#/definitions/settings"
+            }
+        }
+    },
+    "required": [
+        "name",
+        "settings"
+    ],
+    "definitions": {
+        "settings": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "description": "The group setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the setting"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A brief description of the setting"
+                        },
+                        "group": {
+                            "type": "object",
+                            "description": "The settings for the group",
+                            "additionalProperties": false,
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "description": "The title of the group setting"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "A brief description of the setting"
+                                },
+                                "settings": {
+                                    "type": "object",
+                                    "description": "The settings for the group",
+                                    "additionalProperties": {
+                                        "$ref": "#/definitions/settings"
+                                    }
+                                }
+                            },
+                            "required": [
+                                "settings"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "group"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The title field for the setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title content"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A brief description of the title"
+                        },
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "title"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "type",
+                        "title"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The spacer/divider of the setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the type setting"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A brief description of the type setting"
+                        },
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "spacer",
+                                "divider"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "type"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The fields for the setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the fields"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A brief description of the fields"
+                        },
+                        "fields": {
+                            "additionalProperties": false,
+                            "description": "The fields for the setting",
+                            "oneOf": [
+                                {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/field-type"
+                                    }
+                                },
+                                {
+                                    "type": "object",
+                                    "$ref": "#/definitions/field-type"
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "fields"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The html field for the setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "title": {
+                            "type": "string",
+                            "description": "The title of the field"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "A brief description of the field",
+                            "examples": [
+                                {
+                                    "type": "string",
+                                    "text": "The text of the field"
+                                },
+                                {
+                                    "type": "divider"
+                                },
+                                {
+                                    "type": "hidden"
+                                },
+                                {
+                                    "type": "select",
+                                    "multiple": false,
+                                    "required": false,
+                                    "options": [
+                                        {
+                                            "value": "value-1",
+                                            "label": "Label 1",
+                                            "selected": false,
+                                            "disabled": false
+                                        },
+                                        {
+                                            "value": "value-2",
+                                            "label": "Label 2",
+                                            "selected": false,
+                                            "disabled": false
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "field": {
+                            "type": "object",
+                            "description": "The field of the setting",
+                            "$ref": "#/definitions/field-type"
+                        }
+                    },
+                    "required": [
+                        "field"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The html field for the setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "html": {
+                            "oneOf": [
+                                {
+                                    "type": "string",
+                                    "description": "The html content",
+                                    "examples": [
+                                        {
+                                            "html": "<div>HTML Content</div>"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "object",
+                                    "description": "The html content and wrapper",
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "html": {
+                                            "type": "string",
+                                            "description": "The html content"
+                                        },
+                                        "wrapper": {
+                                            "type": "string",
+                                            "description": "The wrapper element",
+                                            "default": "div",
+                                            "pattern": "^([a-z]+([a-z0-9-]*[a-z]+)?)$",
+                                            "examples": [
+                                                {
+                                                    "wrapper": "div"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "html"
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    "required": [
+                        "html"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The html field for the setting",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/aria-data-attributes"
+                    },
+                    "properties": {
+                        "tag": {
+                            "type": "object",
+                            "description": "The tag of the setting",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "description": "The name of the tag",
+                                    "pattern": "^([a-z]+([a-z0-9-]*[a-z]+)?)$",
+                                    "examples": [
+                                        {
+                                            "name": "div"
+                                        }
+                                    ]
+                                },
+                                "attributes": {
+                                    "type": "object",
+                                    "description": "The attributes of the tag",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "examples": [
+                                        {
+                                            "key": "value"
+                                        }
+                                    ]
+                                },
+                                "content": {
+                                    "type": "string",
+                                    "description": "The content of the tag"
+                                }
+                            },
+                            "required": [
+                                "name"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "html"
+                    ]
+                }
+            ]
+        },
+        "data-attributes": {
+            "type": "object",
+            "description": "The data-* attribute, data- key will prepend",
+            "patternProperties": {
+                "^[a-zA-Z0-9]+([a-zA-Z0-9\\-_]*[a-zA-Z0-9]+)?$": {
+                    "type": [
+                        "string",
+                        "number",
+                        "boolean"
+                    ]
+                }
+            },
+            "additionalProperties": false,
+            "examples": [
+                {
+                    "key": "as data-key="
+                }
+            ]
+        },
+        "aria-attribute": {
+            "type": "object",
+            "description": "The aria-* attribute, aria- key will prepend",
+            "additionalProperties": false,
+            "patternProperties": {
+                "^[a-zA-Z0-9]+([a-zA-Z0-9\\-_]*[a-zA-Z0-9]+)?$": {
+                    "type": [
+                        "string",
+                        "number",
+                        "boolean"
+                    ]
+                }
+            },
+            "examples": [
+                {
+                    "label": "as aria-label="
+                }
+            ]
+        },
+        "class-attributes": {
+            "description": "The class attributes",
+            "oneOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            ]
+        },
+        "aria-data-attributes": {
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/data-attributes"
+                },
+                "aria": {
+                    "$ref": "#/definitions/aria-attribute"
+                }
+            }
+        },
+        "field-type": {
+            "additionalProperties": false,
+            "properties": {
+                "data": {
+                    "$ref": "#/definitions/data-attributes"
+                },
+                "class": {
+                    "$ref": "#/definitions/class-attributes",
+                    "description": "The class name",
+                    "examples": [
+                        "single-class",
+                        [
+                            "multiple-class-1",
+                            "multiple-class-2"
+                        ]
+                    ]
+                },
+                "aria": {
+                    "$ref": "#/definitions/aria-attribute"
+                }
+            },
+            "oneOf": [
+                {
+                    "type": "object",
+                    "enum": [
+                        "string"
+                    ],
+                    "description": "A plain text string",
+                    "properties": {
+                        "text": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "text"
+                    ],
+                    "examples": [
+                        {
+                            "text": "The text of the type"
+                        }
+                    ]
+                },
+                {
+                    "type": "string",
+                    "enum": [
+                        "divider"
+                    ],
+                    "description": "A divider",
+                    "examples": [
+                        {
+                            "type": "divider"
+                        }
+                    ]
+                },
+                {
+                    "type": "object",
+                    "enum": [
+                        "hidden"
+                    ],
+                    "description": "A hidden field",
+                    "properties": {
+                        "value": {
+                            "type": "string"
+                        }
+                    },
+                    "required": [
+                        "value"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The type of the select",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "select"
+                            ]
+                        },
+                        "multiple": {
+                            "type": "boolean",
+                            "description": "Whether multiple values can be selected"
+                        },
+                        "required": {
+                            "type": "boolean",
+                            "description": "Whether the select is required"
+                        },
+                        "disabled": {
+                            "type": "boolean",
+                            "description": "Whether the select is disabled"
+                        },
+                        "readonly": {
+                            "type": "boolean",
+                            "description": "Whether the select is read-only"
+                        },
+                        "placeholder": {
+                            "type": "string",
+                            "description": "The placeholder text"
+                        },
+                        "options": {
+                            "type": "array",
+                            "items": {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "value": {
+                                                "type": "string"
+                                            },
+                                            "label": {
+                                                "type": "string"
+                                            },
+                                            "selected": {
+                                                "type": "boolean",
+                                                "default": false,
+                                                "description": "Whether the option is selected"
+                                            },
+                                            "disabled": {
+                                                "type": "boolean",
+                                                "default": false,
+                                                "description": "Whether the option is disabled"
+                                            }
+                                        },
+                                        "required": [
+                                            "value",
+                                            "label"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "label": {
+                                                "type": "string"
+                                            },
+                                            "group": {
+                                                "$ref": "#/definitions/field-type/oneOf/3/properties/options/items/oneOf/0"
+                                            }
+                                        },
+                                        "required": [
+                                            "group",
+                                            "label"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "options",
+                        "type"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "description": "The type of the field",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "checkbox",
+                                "radio"
+                            ]
+                        },
+                        "multiple": {
+                            "type": "boolean",
+                            "description": "Whether multiple values can be selected"
+                        },
+                        "required": {
+                            "type": "boolean",
+                            "description": "Whether the field is required"
+                        },
+                        "disabled": {
+                            "type": "boolean",
+                            "description": "Whether the field is disabled"
+                        },
+                        "readonly": {
+                            "type": "boolean",
+                            "description": "Whether the field is read-only"
+                        },
+                        "placeholder": {
+                            "type": "string",
+                            "description": "The placeholder text"
+                        },
+                        "options": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "value": {
+                                        "type": "string"
+                                    },
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "selected": {
+                                        "type": "boolean",
+                                        "default": false,
+                                        "description": "Whether the option is selected"
+                                    },
+                                    "disabled": {
+                                        "type": "boolean",
+                                        "default": false,
+                                        "description": "Whether the option is disabled"
+                                    }
+                                },
+                                "required": [
+                                    "value",
+                                    "label"
+                                ]
+                            }
+                        }
+                    },
+                    "required": [
+                        "options",
+                        "type"
+                    ]
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": [
+                                "textarea",
+                                "text",
+                                "email",
+                                "number",
+                                "range",
+                                "date",
+                                "time",
+                                "password",
+                                "tel",
+                                "url",
+                                "submit",
+                                "reset",
+                                "button"
+                            ]
+                        },
+                        "required": {
+                            "type": "boolean",
+                            "description": "Whether the field is required"
+                        },
+                        "disabled": {
+                            "type": "boolean",
+                            "description": "Whether the field is disabled"
+                        },
+                        "readonly": {
+                            "type": "boolean",
+                            "description": "Whether the field is read-only"
+                        },
+                        "placeholder": {
+                            "type": "string",
+                            "description": "The placeholder text"
+                        },
+                        "maxlength": {
+                            "type": "integer",
+                            "description": "The maximum length of the field"
+                        },
+                        "value": {
+                            "type": "string",
+                            "description": "The value of the field"
+                        }
+                    },
+                    "required": [
+                        "type"
+                    ],
+                    "if" : {
+                        "properties": {
+                            "type": {
+                                "const": "textarea"
+                            }
+                        }
+                    },
+                    "then": {
+                        "properties": {
+                            "rows": {
+                                "type": "integer",
+                                "description": "The number of rows"
+                            },
+                            "cols": {
+                                "type": "integer",
+                                "description": "The number of columns"
+                            }
+                        },
+                        "required": []
+                    },
+                    "else": {
+                        "if": {
+                            "properties": {
+                                "type": {
+                                    "const": [
+                                        "number",
+                                        "range"
+                                    ]
+                                }
+                            }
+                        },
+                        "then": {
+                            "properties": {
+                                "min": {
+                                    "type": "number",
+                                    "description": "The minimum value"
+                                },
+                                "max": {
+                                    "type": "number",
+                                    "description": "The maximum value"
+                                },
+                                "step": {
+                                    "type": "number",
+                                    "description": "The step value"
+                                }
+                            },
+                            "required": []
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}

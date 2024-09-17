@@ -1,0 +1,74 @@
+// --------------------------------------------------------
+// STYLES
+// --------------------------------------------------------
+@import "./variables/colors";
+@import "./variables/base";
+@import "./components/root";
+@import "./mixins/coloring";
+
+.pentagonal-addon-section,
+#contentarea:has(.pentagonal-addon-section) {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0;
+    float:none;
+    border:none;
+    width: 100%;
+    display: flex;
+    flex: 0 1 100%;
+    flex-wrap: wrap;
+    flex-direction: column;
+    min-height: calc(100vh - var(--pentagonal-content-space-height, 101px));
+}
+
+@media only screen and (min-width: 1275px) {
+    #contentarea:has(.pentagonal-addon-section),
+    .pentagonal-addon-section {
+        min-height: calc(100vh - var(--pentagonal-content-space-height, 83px));
+    }
+}
+
+div:has(>.pentagonal-addon-section) {
+    & {
+        float: none !important;
+        width: auto !important;
+        display: flex;
+        flex-direction: column;
+    }
+    > :not(.pentagonal-addon-section) {
+        display: none;
+    }
+}
+
+.pentagonal-addon-section {
+    & {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+        font-weight: $base-font-weight;
+        line-height: $base-line-height;
+        font-family: $base-font-family;
+        font-size: $base-font-size;
+    }
+    &::before,
+    &::after,
+    & *,
+    & *::before,
+    & *::after {
+        box-sizing: border-box;
+    }
+
+    .btn {
+        border-radius: $base-border-radius;
+    }
+    // colors
+    @each $color-key, $color-value in $color_lists_array {
+        @include coloring-base($color-key, $color-value);
+    }
+
+    kbd,
+    code,
+    pre {
+        font-family: $base-mono-family;
+    }
+}

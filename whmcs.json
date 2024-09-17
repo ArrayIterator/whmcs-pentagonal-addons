@@ -1,0 +1,21 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-addons",
+  "name": "pentagonal",
+  "license": "MIT",
+  "category": "utilities",
+  "description": {
+    "name": "Pentagonal Addon",
+    "tagline": "Addon to help manage the WHMCS Products from Pentagonal",
+    "long": "Addon to help missing features in WHMCS Products from Pentagonal Developer. The addons can help & adding additional miscellaneous features."
+  },
+  "support": {
+    "homepage": "https://www.pentagonal.org/"
+  },
+  "authors": [
+    {
+      "name": "ArrayIterator",
+      "homepage": "https://www.pentagonal.org/"
+    }
+  ]
+}

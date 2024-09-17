@@ -1,0 +1,12 @@
+# deny tpl, .htaccess, .htpasswd, .log, .ini, .sh, .sql, .php, .yaml, .yml, .html, .json, .lock, and exlude index.php & index.html being deny
+# redirectto ../../
+<FilesMatch "^(?!index\.(php|s?html?)$).*\.(tpl|htaccess|htpasswd|log|sh|sql|php|ya?ml|json|lock|ini|html)$">
+    RewriteEngine On
+    RewriteRule ^(.*)$ ../../$1 [L]
+</FilesMatch>
+# only allow directory css, js, img
+# redirectto ../../
+<DirectoryMatch "^/(src|schema|templates|stubs|bin|vendor|ui)/">
+    RewriteEngine On
+    RewriteRule ^(.*)$ ../../$1 [L]
+</DirectoryMatch>

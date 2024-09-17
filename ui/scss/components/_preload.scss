@@ -1,0 +1,78 @@
+@import "../variables/base";
+.pentagonal-addon-wait-loader,
+#{$selector-container} {
+    visibility: visible;
+    opacity: 1;
+    transition: all 0.3s ease;
+    background-color: var(--pentagonal-gray-100);
+}
+.pentagonal-addon-wait-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top:0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: -99999;
+    transition: all ease-in-out .5s;
+    visibility: hidden;
+    opacity: 0;
+    background-color: var(--pentagonal-gray-100);
+    .pentagonal-addon-wait-loader-text {
+        position: relative;
+        z-index: 10;
+        text-transform: uppercase;
+        font-weight: 600;
+        display: none;
+        overflow: hidden;
+        white-space: nowrap; /* Keeps the content on a single line */
+        > span {
+            color: var(--pentagonal-gray-600);
+            margin:0 auto;
+            text-align: center;
+            letter-spacing: .15em;
+            border-right: .15em solid;
+            padding-right: .15em;
+            overflow: hidden;
+            display: block;
+            animation: pentagonal-typing 5s steps(30, end) infinite, pentagonal-blink-caret .45s step-end infinite;
+        }
+    }
+    > span {
+        z-index:9;
+        display: block;
+        width: 8rem;
+        aspect-ratio: 1/1;
+        position: absolute;
+        border-radius: 50%;
+        border: .5rem solid transparent;
+        border-top-color: var(--pentagonal-lime-500);
+        animation: pentagonal-loading-spin 1.5s linear infinite forwards;
+        & + span {
+            width: 6rem;
+            animation-duration: .8s;
+            animation-direction: reverse;
+            border-top-color: var(--pentagonal-cyan-500);
+            & + span {
+                width: 2.5rem;
+                animation-duration: .5s;
+                border-color: var(--pentagonal-cyan-500) transparent var(--pentagonal-lime-500);
+                animation-direction: normal;
+            }
+        }
+    }
+}
+.pentagonal-addon-wait {
+    .pentagonal-addon-wait-loader {
+        z-index: 99999;
+        visibility: visible;
+        opacity: 1;
+    }
+    #{$selector-container} {
+        visibility: hidden;
+        opacity: 0;
+    }
+}
