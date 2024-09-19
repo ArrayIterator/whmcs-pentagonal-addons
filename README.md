@@ -10,9 +10,18 @@ It can make additional level of whmcs rule
 ```txt
 templates/
     └── template-name/
-        ├── hooks.php
-        └── services.php
+        ├── schema/
+        │   └── theme.json (the theme schema)
+        ├── hooks/
+        │   └── hooks.php (the hooks file)
+        └── services/
+            └── services.php (the services file)
 ```
+
+Autoload the hooks and services on active templates should be placed on the `hooks` and `services` directory and should declare on schema/theme.json with
+`hooks: true` and `services: true`
+
+See [options+themes.json](schema/options+themes.json) for the schema structure
 
 ### Example
 
@@ -104,6 +113,7 @@ php bin/gen_stub.php --whmcs-dir /path/to/whmcs
 - `-q` or `--quiet` to quiet (without value)
 - `-f` or `--force` to continue without interactive (without value)
 - `-v` or `-vv` or `-vvv` the verbose level (without value)
+
 
 ## Requirements
 
