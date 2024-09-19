@@ -1,0 +1,60 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://hub.pentagonal.org/schemas/plugin.json",
+    "type": "object",
+    "title": "Schema for plugin",
+    "version": "1.0.0",
+    "description": "The schema for plugin",
+    "required": [
+        "name",
+        "plugin_file"
+    ],
+    "properties": {
+        "$schema": {
+            "description": "The schema uri of the schema",
+            "type": "string"
+        },
+        "$id": {
+            "description": "The id of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "name": {
+            "description": "The name of the schema",
+            "type": "string"
+        },
+        "version": {
+            "description": "The version of the schema",
+            "type": "string"
+        },
+        "url": {
+            "description": "The url of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "author": {
+            "description": "The author of the schema",
+            "type": "string"
+        },
+        "author_url": {
+            "description": "The author url of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "license": {
+            "description": "The license of the schema",
+            "type": "string"
+        },
+        "license_url": {
+            "description": "The license url of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "plugin_file": {
+            "description": "The plugin file of the schema",
+            "default": "plugin.php",
+            "pattern": "^[a-z0-9_\\-.]+\\.php$",
+            "type": "string"
+        }
+    }
+}

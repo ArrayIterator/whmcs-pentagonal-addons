@@ -126,7 +126,6 @@ abstract class AbstractService implements ServiceInterface
      * @param mixed $arg
      * @param ...$args
      * @abstract
-     * @noinspection PhpUnusedParameterInspection
      */
     protected function dispatch($arg = null, ...$args)
     {

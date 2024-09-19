@@ -12,6 +12,7 @@ use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\StructureSchema;
 use Pentagonal\Neon\WHMCS\Addon\Services\AdminService;
 use Pentagonal\Neon\WHMCS\Addon\Services\Hooks;
+use Pentagonal\Neon\WHMCS\Addon\Services\PluginService;
 use Pentagonal\Neon\WHMCS\Addon\Services\ThemeService;
 use ReflectionClass;
 use Throwable;
@@ -64,6 +65,7 @@ class Services implements ServicesInterface
      * @var class-string<ServiceInterface>[]
      */
     public const PROTECTED_SERVICES = [
+        PluginService::class,
         ThemeService::class,
         AdminService::class,
         Hooks::class
