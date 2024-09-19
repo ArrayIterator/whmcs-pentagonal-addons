@@ -14,7 +14,7 @@ class DispatcherResponse implements DispatcherResponseInterface
     /**
      * @var int $statusCode the status code
      */
-    protected $statusCode;
+    protected int $statusCode;
 
     /**
      * @var mixed|null $data the data
@@ -24,7 +24,7 @@ class DispatcherResponse implements DispatcherResponseInterface
     /**
      * @var Throwable|null $error the error
      */
-    protected $error;
+    protected ?Throwable $error;
 
     /**
      * Create new instance

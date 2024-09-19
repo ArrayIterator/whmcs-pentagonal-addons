@@ -195,6 +195,7 @@ class DataNormalizer
         // add : for tailwind
         return preg_replace('/[^a-z0-9_\-]/i', '-', $class);
     }
+
     /**
      * Splitting the string or iterable to array
      *

@@ -17,17 +17,17 @@ final class URL
     /**
      * @var string|null $addonBase the module base
      */
-    private static $addonBase = null;
+    private static ?string $addonBase = null;
 
     /**
      * @var string|null $baseURL the base url
      */
-    private static $baseURL = null;
+    private static ?string $baseURL = null;
 
     /**
      * @var string|null $adminURL the admin url
      */
-    private static $adminURL = null;
+    private static ?string $adminURL = null;
 
     /**
      * Get admin URL

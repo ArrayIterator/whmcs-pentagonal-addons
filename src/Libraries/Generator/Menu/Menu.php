@@ -13,6 +13,9 @@ use function is_string;
 
 class Menu extends AbstractMenu
 {
+    /**
+     * @var ?callable $callablePermission Callable Permission
+     */
     private $callablePermission;
 
     /**

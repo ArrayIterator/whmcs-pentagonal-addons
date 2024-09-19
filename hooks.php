@@ -25,8 +25,8 @@ return (function () {
     if (!function_exists('add_hook')) {
         return null;
     }
-    // check if php version less than 7.2
-    if (PHP_VERSION_ID < 70200) {
+    // check if php version less than 7.4
+    if (PHP_VERSION_ID < 70400) {
         return null;
     }
 

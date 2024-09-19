@@ -28,17 +28,17 @@ class Menus implements Stringable, IteratorAggregate
     /**
      * @var array<string, AbstractMenu> $menus Menu lists
      */
-    private $menus = [];
+    private array $menus = [];
 
     /**
      * @var int $menusIncrement Increment
      */
-    private static $menusIncrement = 0;
+    private static int $menusIncrement = 0;
 
     /**
      * @var EventManager $eventManager the Event Manager
      */
-    protected $eventManager;
+    protected EventManager $eventManager;
 
     /**
      * Menus constructor.

@@ -13,9 +13,14 @@ use function method_exists;
 
 trait LanguageTrait
 {
-    private $initialized = false;
+    private bool $initialized = false;
 
-    private function initialize()
+    /**
+     * Initialize
+     *
+     * @return void
+     */
+    private function initialize() : void
     {
         if ($this->initialized || !method_exists($this, 'getFacadeApplication')) {
             return;

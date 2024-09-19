@@ -28,22 +28,22 @@ class EventManager implements EventManagerInterface
     /**
      * @var Collector<TName, Collector<array{0: bool, 1: TFunction>> $listeners the listeners
      */
-    private $listeners;
+    private Collector $listeners;
 
     /**
      * @var array{0: TName, 1: TFunction} $current current event
      */
-    private $current = [];
+    private array $current = [];
 
     /**
      * @var array{0: TName, 1: TFunction[]}> $processing current processing events
      */
-    private $processing = [];
+    private array $processing = [];
 
     /**
      * @var array<TName, TParam[]> $originalParams list of dispatched params
      */
-    private $originalParams = [];
+    private array $originalParams = [];
 
     /**
      * EventManager constructor.

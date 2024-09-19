@@ -21,22 +21,22 @@ class AdminDispatcherHandler
     /**
      * @var AdminDispatcher $adminDispatcher the admin dispatcher
      */
-    private $adminDispatcher;
+    private AdminDispatcher $adminDispatcher;
 
     /**
-     * @var SplObjectStorage<DispatcherHandlerInterface> $handlers
+     * @var SplObjectStorage<DispatcherHandlerInterface> $objectStorage
      */
-    protected $handlers;
+    protected SplObjectStorage $objectStorage;
 
     /**
      * @var ?array{type: string, message: string} $message
      */
-    protected $message = null;
+    protected ?array $message = null;
 
     /**
      * @var bool $processed if processed
      */
-    private $processed = false;
+    private bool $processed = false;
 
     /**
      * @param AdminDispatcher $dispatcher
@@ -44,7 +44,7 @@ class AdminDispatcherHandler
     public function __construct(AdminDispatcher $dispatcher)
     {
         $this->adminDispatcher = $dispatcher;
-        $this->handlers = new SplObjectStorage();
+        $this->objectStorage = new SplObjectStorage();
     }
 
     /**
@@ -65,7 +65,7 @@ class AdminDispatcherHandler
      */
     public function remove(DispatcherHandlerInterface $handler) : void
     {
-        $this->handlers->detach($handler);
+        $this->objectStorage->detach($handler);
     }
 
     /**
@@ -76,7 +76,7 @@ class AdminDispatcherHandler
      */
     public function has(DispatcherHandlerInterface $handler) : bool
     {
-        return isset($this->handlers[$handler]);
+        return isset($this->objectStorage[$handler]);
     }
 
     /**
@@ -88,7 +88,7 @@ class AdminDispatcherHandler
     public function add(DispatcherHandlerInterface $handler)
     {
         if (!$this->has($handler)) {
-            $this->handlers->attach($handler);
+            $this->objectStorage->attach($handler);
         }
     }
 
@@ -97,7 +97,7 @@ class AdminDispatcherHandler
      */
     public function getHandlers() : array
     {
-        return iterator_to_array($this->handlers);
+        return iterator_to_array($this->objectStorage);
     }
 
     /**
@@ -162,7 +162,7 @@ class AdminDispatcherHandler
         $page = $this->getAdminDispatcher()->getPage();
         $lowerPage = is_string($page) ? strtolower($page) : $page;
         $handled = false;
-        foreach ($this->handlers as $handler) {
+        foreach ($this->getHandlers() as $handler) {
             $isApiHandler = $handler instanceof DispatcherHandlerApiInterface;
             $handlerPage = $handler->getPage();
             $isCaseSensitive = $handler->isCaseSensitivePage();

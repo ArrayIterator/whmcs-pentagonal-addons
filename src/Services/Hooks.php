@@ -5,28 +5,29 @@ namespace Pentagonal\Neon\WHMCS\Addon\Services;
 
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractBaseHook;
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractService;
-use Pentagonal\Neon\WHMCS\Addon\Helpers\HookInclude;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaMenuButton;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaHeadOutput;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\VersionHook;
+use Pentagonal\Neon\WHMCS\Addon\Interfaces\HookDispatcherInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HookInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HooksServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\HookDispatcher;
+use Pentagonal\Neon\WHMCS\Addon\Schema\ThemeSchema;
 use ReflectionClass;
 use Throwable;
-use WHMCS\View\Template\Theme;
 use function array_shift;
 use function call_user_func;
 use function count;
+use function file_exists;
 use function function_exists;
 use function get_class;
 use function hook_log;
 use function in_array;
 use function is_array;
 use function is_callable;
-use function is_dir;
 use function is_object;
 use function is_string;
 use function strtolower;
@@ -56,38 +57,37 @@ class Hooks extends AbstractService implements HooksServiceInterface
     /**
      * @var array<string, class-string<HookInterface|false> $cachedClass The cached class
      */
-    private static $cachedClass = [];
+    private static array $cachedClass = [];
 
     /**
      * @var string $name the hook name
      */
-    protected $name = 'Hooks';
+    protected string $name = 'Hooks';
 
     /**
      * @var array<HookInterface> $queue The hook queue
      */
-    protected $queue = [];
+    protected array $queue = [];
 
     /**
      * @var array<array<string, bool>> $dispatched The dispatched hook
      */
-    protected $dispatched = [];
+    protected array $dispatched = [];
 
     /**
-     * @var \Pentagonal\Neon\WHMCS\Addon\Interfaces\HookDispatcherInterface $dispatcher
-     * @noinspection PhpFullyQualifiedNameUsageInspection
+     * @var HookDispatcherInterface $dispatcher
      */
-    private $dispatcher;
+    private HookDispatcherInterface $dispatcher;
 
     /**
      * @var bool $inQueue The hook in queue status
      */
-    private $inQueue = false;
+    private bool $inQueue = false;
 
     /**
      * @var bool $initialized is initialized
      */
-    private $initialized = false;
+    private bool $initialized = false;
 
     /**
      * @inheritDoc
@@ -254,10 +254,19 @@ class Hooks extends AbstractService implements HooksServiceInterface
     final public function __construct(ServicesInterface $services)
     {
         parent::__construct($services);
-        $this->dispatcher = new HookDispatcher();
         foreach (self::HOOK_FACTORIES as $hook) {
             $this->queue($hook);
         }
+    }
+
+    /**
+     * Get the hook dispatcher
+     *
+     * @return HookDispatcherInterface
+     */
+    public function getDispatcher(): HookDispatcherInterface
+    {
+        return $this->dispatcher ??= new HookDispatcher();
     }
 
     /**
@@ -279,7 +288,7 @@ class Hooks extends AbstractService implements HooksServiceInterface
     /**
      * @inheritDoc
      */
-    public function dispatch(...$args)
+    public function dispatch($arg = null, ...$args)
     {
         $this->init();
         // prevent multiple queue
@@ -299,7 +308,7 @@ class Hooks extends AbstractService implements HooksServiceInterface
                         continue;
                     }
                     $this->dispatched[$className][$hookName] = true;
-                    $this->dispatcher->add($hookName, static function ($vars) use ($hook) {
+                    $this->getDispatcher()->add($hookName, static function ($vars) use ($hook) {
                         $vars = is_array($vars) ? $vars : [];
                         return $hook->run($vars);
                     });
@@ -322,24 +331,24 @@ class Hooks extends AbstractService implements HooksServiceInterface
             return;
         }
         $this->initialized = true;
-        $em = $this->services->getCore()->getEventManager();
+        $em = $this->getServices()->getCore()->getEventManager();
         try {
             $em->apply(self::EVENT_BEFORE_HOOKS_INIT, $this);
-            $theme = $this->services->getCore()->getTheme();
-            if (!$theme instanceof Theme) {
+            $themeHook = $this->getServices()->getCore()->getSchemas()->get(ThemeSchema::class);
+            if (!$themeHook instanceof ThemeSchema || !$themeHook->isValid()) {
                 return;
             }
-            $activeTemplate = $theme->getTemplatePath();
-            if (!is_dir($activeTemplate)) {
+            $hooksFile = $themeHook->getHooksFile();
+            if (!$hooksFile || !file_exists($hooksFile)) {
                 return;
             }
             try {
-                HookInclude::include($this, $activeTemplate . '/hooks.php');
+                StaticInclude::include($hooksFile, ['hooks' => $this]);
             } catch (Throwable $e) {
                 Logger::error($e, [
                     'type' => 'Hook',
                     'method' => 'init',
-                    'file' => $activeTemplate . '/hooks.php'
+                    'file' => $hooksFile
                 ]);
                 if (function_exists('hook_log')) {
                     hook_log('Pentagonal', 'Error Template Hook: ' . $e->getMessage());

@@ -7,6 +7,7 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\Services;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Schemas;
 use Throwable;
 use WHMCS\Application;
 use WHMCS\View\Template\Theme;
@@ -32,42 +33,43 @@ class Core
     /**
      * @var Core $instance the core instance
      */
-    private static $instance;
+    private static self $instance;
 
     /**
      * @var bool $dispatched the core dispatched
      */
-    private $dispatched = false;
+    private bool $dispatched = false;
 
     /**
      * @var Services the services
      */
-    private $services;
+    private Services $services;
 
     /**
      * @var EventManager $manager the event manager
      */
-    private $manager;
+    private EventManager $manager;
 
     /**
      * @var Application $whmcs the whmcs application
      */
-    private $whmcs;
+    private Application $whmcs;
 
     /**
      * @var Addon $addon the addon
      */
-    private $addon;
+    private Addon $addon;
+
+    /**
+     * @var Schemas $schemas the schemas
+     */
+    private Schemas $schemas;
 
     /**
      * Core constructor.
      */
     private function __construct()
     {
-        $this->manager = new EventManager();
-        $this->services = new Services($this);
-        $this->whmcs = Application::getInstance();
-        $this->addon = new Addon($this);
     }
 
     /**
@@ -75,10 +77,7 @@ class Core
      */
     public static function factory(): self
     {
-        if (!isset(self::$instance)) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
     /**
@@ -99,11 +98,21 @@ class Core
     }
 
     /**
+     * Get the schemas object
+     *
+     * @return Schemas
+     */
+    public function getSchemas() : Schemas
+    {
+        return $this->schemas ??= new Schemas($this);
+    }
+
+    /**
      * @return Application
      */
     public function getApplication(): Application
     {
-        return $this->whmcs;
+        return $this->whmcs ??= Application::getInstance();
     }
 
     /**
@@ -113,7 +122,7 @@ class Core
      */
     public function getServices(): Services
     {
-        return $this->services;
+        return $this->services ??= new Services($this);
     }
 
     /**
@@ -123,7 +132,17 @@ class Core
      */
     public function getAddon(): Addon
     {
-        return $this->addon;
+        return $this->addon ??= new Addon($this);
+    }
+
+    /**
+     * Check if the core is dispatched
+     *
+     * @return bool
+     */
+    public function isDispatched(): bool
+    {
+        return $this->dispatched;
     }
 
     /**
@@ -131,7 +150,7 @@ class Core
      */
     public function dispatch() : self
     {
-        if ($this->dispatched) {
+        if ($this->isDispatched()) {
             return $this;
         }
         // only allow on the addon file
@@ -141,6 +160,7 @@ class Core
         if (!in_array($file, [$addonFile, $hooksFile])) {
             return $this;
         }
+
         $em = $this->getEventManager();
         Logger::debug('Dispatching Core');
         $this->dispatched = true;
@@ -157,7 +177,7 @@ class Core
                     ]
                 );
             }
-            $this->services->run();
+            $this->getServices()->run();
         } catch (Throwable $e) {
             Logger::error(
                 $e,
@@ -230,7 +250,7 @@ class Core
      */
     public function getEventManager(): EventManagerInterface
     {
-        return $this->manager;
+        return $this->manager ??= new EventManager();
     }
 
     /**

@@ -19,27 +19,29 @@ final class SessionFlash
      */
     public const SESSION_KEY_IDENTIFIER = 'pentagonal_flash_session';
 
-    private $all;
     /**
      * @var array $current the current session
      */
-    private $current = [];
+    private array $current = [];
 
     /**
      * @var array $next the next session
      */
-    private $next = [];
+    private array $next = [];
 
     /**
-     * @var bool $init the session initialized
+     * @var ?SessionFlash $init the instance
      */
-    private static $instance = null;
+    private static ?SessionFlash $instance = null;
 
     /**
      * @var bool $initialized the session initialized
      */
-    private $initialized = false;
+    private bool $initialized = false;
 
+    /**
+     * SessionFlash constructor.
+     */
     private function __construct()
     {
         $this->init();
@@ -52,10 +54,7 @@ final class SessionFlash
      */
     public static function getInstance() : self
     {
-        if (!self::$instance) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
     /**
@@ -75,7 +74,6 @@ final class SessionFlash
         if (is_array($_SESSION[self::SESSION_KEY_IDENTIFIER]??null)) {
             $this->current = $_SESSION[self::SESSION_KEY_IDENTIFIER];
         }
-        $this->all = $_SESSION;
         unset($_SESSION[self::SESSION_KEY_IDENTIFIER]);
     }
 
@@ -110,9 +108,12 @@ final class SessionFlash
     }
 
     /**
+     * Get next session
+     *
      * @param string $key
      * @param $default
      * @return mixed|null
+     * @noinspection PhpUnused
      */
     public static function getNext(string $key, $default = null)
     {

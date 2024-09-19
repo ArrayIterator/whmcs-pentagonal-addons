@@ -13,7 +13,7 @@ use const PHP_INT_MIN;
 
 class AdminAreaHeadOutput extends AbstractHook
 {
-    protected $priority = PHP_INT_MIN;
+    protected int $priority = PHP_INT_MIN;
 
     /**
      * @var string $hooks hook name

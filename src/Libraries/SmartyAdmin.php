@@ -16,6 +16,9 @@ use const SMARTY_MBSTRING;
 
 class SmartyAdmin extends SmartyBC
 {
+    /**
+     * @param string $templateDir Template Directory
+     */
     public function __construct(string $templateDir)
     {
         self::$_MBSTRING = SMARTY_MBSTRING && function_exists("mb_split");
@@ -30,6 +33,11 @@ class SmartyAdmin extends SmartyBC
         $this->assignDefault();
     }
 
+    /**
+     * Assign Default Variables
+     *
+     * @return void
+     */
     protected function assignDefault()
     {
         $this->assign([

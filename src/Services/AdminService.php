@@ -7,22 +7,25 @@ use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractService;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\AdminDispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;
 
+/**
+ * Class AdminService for admin service handler
+ */
 class AdminService extends AbstractService implements RunnableServiceInterface
 {
     /**
      * @var string $name the service friendly name
      */
-    protected $name = 'Admin Service';
+    protected string $name = 'Admin Service';
 
     /**
      * @var string $category the service category
      */
-    protected $category = 'system';
+    protected string $category = 'system';
 
     /**
-     * @var AdminDispatcher $adminDispatcher the module page
+     * @var ?AdminDispatcher $adminDispatcher the module page dispatcher
      */
-    protected $adminDispatcher = null;
+    protected ?AdminDispatcher $adminDispatcher = null;
 
     /**
      * Get the module page object
@@ -31,10 +34,7 @@ class AdminService extends AbstractService implements RunnableServiceInterface
      */
     public function getAdminDispatcher(): AdminDispatcher
     {
-        if (!$this->adminDispatcher instanceof AdminDispatcher) {
-            $this->adminDispatcher = new AdminDispatcher($this);
-        }
-        return $this->adminDispatcher;
+        return $this->adminDispatcher ??= new AdminDispatcher($this);
     }
 
     /**
@@ -50,7 +50,7 @@ class AdminService extends AbstractService implements RunnableServiceInterface
     /**
      * @inheritDoc
      */
-    protected function dispatch(...$args)
+    protected function dispatch($arg = null, ...$args)
     {
         if (!$this->getServices()->getCore()->isAdminAreaRequest()) {
             return;

@@ -1,0 +1,104 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://hub.pentagonal.org/schemas/whmcs/addons/pentagonal/theme.json#",
+    "$comment": "Theme Schema",
+    "title": "Schema for theme",
+    "additionalProperties": false,
+    "properties": {
+        "$schema": {
+            "type": "string",
+            "description": "The URL of the schema"
+        },
+        "$id": {
+            "type": "string",
+            "description": "The ID of the schema"
+        },
+        "name": {
+            "type": "string",
+            "description": "The name of the theme"
+        },
+        "version": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The version of the theme",
+            "default": null
+        },
+        "description": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The description of the theme",
+            "default": null
+        },
+        "url": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The URL of the theme",
+            "default": null
+        },
+        "author": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The author of the theme",
+            "default": null
+        },
+        "author_url": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The author URL of the theme",
+            "default": null
+        },
+        "thumbnail": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null,
+            "description": "The thumbnail url of the theme"
+        },
+        "language_directory": {
+            "type": "string",
+            "description": "The language directory of the theme",
+            "default": "languages"
+        },
+        "license": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The license of the theme",
+            "default": null
+        },
+        "license_url": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "description": "The license URL of the theme",
+            "default": null
+        },
+        "hooks": {
+            "type": "boolean",
+            "description": "Enable hooks for the theme",
+            "default": false
+        },
+        "service": {
+            "type": "boolean",
+            "description": "Enable service for the theme",
+            "default": false
+        }
+    },
+    "required": [
+        "$schema",
+        "name"
+    ]
+}

@@ -29,7 +29,7 @@ class Collector implements CollectorInterface
     /**
      * @var TIterable $data the iterable data
      */
-    protected $data = [];
+    protected array $data = [];
 
     /**
      * @param TIterable $data

@@ -78,32 +78,32 @@ class AdminDispatcher
     /**
      * @var SmartyAdmin $smarty the smarty object
      */
-    protected $smarty;
+    protected SmartyAdmin $smarty;
 
     /**
      * @var AdminService $adminService the admin service
      */
-    protected $adminService;
+    protected AdminService $adminService;
 
     /**
      * @var AdminDispatcherHandler $handler the handler
      */
-    protected $handler;
+    protected AdminDispatcherHandler $handler;
 
     /**
-     * @var Admin $adminObject the admin object
+     * @var ?Admin|false $adminObject the admin object
      */
     protected $adminObject = null;
 
     /**
      * @var bool $dispatched the dispatched
      */
-    private $dispatched = false;
+    private bool $dispatched = false;
 
     /**
      * @var bool $rendered the rendered
      */
-    private $rendered = false;
+    private bool $rendered = false;
 
     /**
      * @var string|false|null $page
@@ -111,19 +111,19 @@ class AdminDispatcher
     private $page = null;
 
     /**
-     * @var string $type the type
+     * @var ?string $type the type
      */
-    private $type = null;
+    private ?string $type = null;
 
     /**
      * @var Menus $topMenu The menus
      */
-    private $topMenu;
+    private Menus $topMenu;
 
     /**
      * @var Menus $leftMenu The menus
      */
-    private $leftMenu;
+    private Menus $leftMenu;
 
     /**
      * @param AdminService $adminService the admin service
@@ -140,11 +140,7 @@ class AdminDispatcher
      */
     public function getHandler() : AdminDispatcherHandler
     {
-        if (!isset($this->handler)) {
-            $this->handler = new AdminDispatcherHandler($this);
-        }
-
-        return $this->handler;
+        return $this->handler ??= new AdminDispatcherHandler($this);
     }
 
     /**
@@ -174,12 +170,9 @@ class AdminDispatcher
      */
     public function getTopMenu(): Menus
     {
-        if (!(($this->topMenu??null) instanceof Menus)) {
-            $this->topMenu = new Menus(
-                $this->getAdminService()->getServices()->getEventManager()
-            );
-        }
-        return $this->topMenu;
+        return $this->topMenu ??= new Menus(
+            $this->getAdminService()->getServices()->getEventManager()
+        );
     }
 
     /**
@@ -189,12 +182,9 @@ class AdminDispatcher
      */
     public function getLeftMenu(): Menus
     {
-        if (!(($this->leftMenu??null) instanceof Menus)) {
-            $this->leftMenu = new Menus(
-                $this->getAdminService()->getServices()->getEventManager()
-            );
-        }
-        return $this->leftMenu;
+        return $this->leftMenu ??= new Menus(
+            $this->getAdminService()->getServices()->getEventManager()
+        );
     }
 
 
@@ -273,12 +263,9 @@ class AdminDispatcher
      */
     public function getSmarty(): SmartyAdmin
     {
-        if ($this->smarty === null) {
-            $this->smarty = new SmartyAdmin(
-                $this->adminService->getServices()->getCore()->getAddon()->getAddonDirectory() . '/templates'
-            );
-        }
-        return $this->smarty;
+        return $this->smarty ??= new SmartyAdmin(
+            $this->getAdminService()->getServices()->getCore()->getAddon()->getAddonDirectory() . '/templates'
+        );
     }
 
     /**
@@ -324,7 +311,7 @@ class AdminDispatcher
         }
         $is_debug_part = ($GLOBALS['display_errors']??null) === true;
         $is_debug = $is_debug_part;
-        $em = $this->adminService->getServices()->getEventManager();
+        $em = $this->getAdminService()->getServices()->getEventManager();
         try {
             $is_debug = $em->apply(self::EVENT_ADMIN_OUTPUT_DEBUG_API, $is_debug);
         } catch (Throwable $e) {
@@ -452,11 +439,11 @@ class AdminDispatcher
      */
     public function render($vars)
     {
-        if ($this->rendered || !$this->dispatched) {
+        if ($this->isRendered() || !$this->isDispatched()) {
             return;
         }
 
-        $em = $this->adminService->getServices()->getEventManager();
+        $em = $this->getAdminService()->getServices()->getEventManager();
         if (!$em->is(Addon::EVENT_ADDON_ADMIN_OUTPUT, [$this, 'render'])) {
             return;
         }
@@ -514,7 +501,7 @@ class AdminDispatcher
     <span></span>
     <span></span>
     <div class="pentagonal-addon-wait-loader-text">
-        <span>{$please_wait}</span>
+        <span>$please_wait</span>
     </div>
 </div>
 HTML;

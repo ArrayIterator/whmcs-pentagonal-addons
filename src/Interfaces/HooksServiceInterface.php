@@ -41,5 +41,5 @@ interface HooksServiceInterface extends RepeatableServiceInterface
     /**
      * Dispatch the hooks
      */
-    public function dispatch(...$args);
+    public function dispatch($arg = null, ...$args);
 }

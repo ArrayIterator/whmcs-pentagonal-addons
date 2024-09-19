@@ -78,57 +78,57 @@ final class Addon
     /**
      * @var Core $core the core
      */
-    protected $core;
+    protected Core $core;
 
     /**
      * @var string $addonName the addon name
      */
-    protected $addonName;
+    protected string $addonName;
 
     /**
      * @var string $addonFile the addon file
      */
-    protected $addonFile;
+    protected string $addonFile;
 
     /**
      * @var string $addonDirectory the addon directory
      */
-    protected $addonDirectory;
+    protected string $addonDirectory;
 
     /**
      * @var bool $configCalled the config called
      */
-    protected $configCalled = false;
+    protected bool $configCalled = false;
 
     /**
      * @var bool $activateCalled the activation called
      */
-    protected $activateCalled = false;
+    protected bool $activateCalled = false;
 
     /**
      * @var bool $deactivateCalled the deactivation called
      */
-    protected $deactivateCalled = false;
+    protected bool $deactivateCalled = false;
 
     /**
      * @var bool $outputCalled the output called
      */
-    protected $outputCalled = false;
+    protected bool $outputCalled = false;
 
     /**
      * @var bool $upgradeCalled the upgrade called
      */
-    protected $upgradeCalled = false;
+    protected bool $upgradeCalled = false;
 
     /**
      * @var bool $allowedAccessAddonPage allow addon page
      */
-    protected $allowedAccessAddonPage = null;
+    protected ?bool $allowedAccessAddonPage = null;
 
     /**
      * @var bool $isAddonFile is addon file
      */
-    protected $isAddonFile = null;
+    protected ?bool $isAddonFile = null;
 
     /**
      * Addon constructor.
@@ -147,11 +147,7 @@ final class Addon
      */
     public function getAddonDirectory(): string
     {
-        if (!isset($this->addonDirectory)) {
-            $baseDir = dirname(__DIR__);
-            $this->addonDirectory = $baseDir;
-        }
-        return $this->addonDirectory;
+        return $this->addonDirectory ??= dirname(__DIR__);
     }
 
     /**
@@ -161,14 +157,12 @@ final class Addon
      */
     public function getAddonName(): string
     {
-        if (!isset($this->addonName)) {
-            $baseDir = $this->getAddonDirectory();
-            $this->addonName = basename($baseDir);
-        }
-        return $this->addonName;
+        return $this->addonName ??= basename($this->getAddonDirectory());
     }
 
     /**
+     * Get the core
+     *
      * @return Core
      */
     public function getCore(): Core
@@ -280,27 +274,7 @@ final class Addon
         if (is_bool($this->allowedAccessAddonPage)) {
             return $this->allowedAccessAddonPage;
         }
-        $this->allowedAccessAddonPage = false;
-        $admin = User::admin();
-        if (!$admin) {
-            return false;
-        }
-        $roleId = $admin->getAttribute('roleid');
-        if ($roleId === null) {
-            return false;
-        }
-        $moduleName = $this->getAddonName();
-        $settings = AddonSetting::find($moduleName, 'access');
-        if (!$settings) {
-            return false;
-        }
-        $values = $settings->getAttribute('value');
-        if (!is_string($values)) {
-            return false;
-        }
-        $allowedRoles = explode(',', $values);
-        $this->allowedAccessAddonPage = in_array($roleId, $allowedRoles);
-        return $this->allowedAccessAddonPage;
+        return $this->allowedAccessAddonPage = User::adminAllowAccessModule($this->getAddonName());
     }
 
     /**

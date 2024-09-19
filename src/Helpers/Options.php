@@ -54,27 +54,32 @@ final class Options
     /**
      * @var Options $instance the instance
      */
-    private static $instance;
+    private static self $instance;
 
     /**
      * @var array<array{string: array{0: string, 1: mixed}}> $queue the queue
      */
-    private $queue = [];
+    private array $queue = [];
 
     /**
      * @var array<array{string: array{0: string, 1: mixed}}> $options the queue
      */
-    private $options = [];
+    private array $options = [];
 
     /**
      * @var array<string, bool>
      */
-    private $notExists = [];
+    private array $notExists = [];
 
     /**
      * @var bool $initialized is initialized
      */
-    private $initialized = false;
+    private bool $initialized = false;
+
+    /**
+     * @var bool $destructedSave is destructed
+     */
+    private bool $destructedSave = false;
 
     /**
      * @private
@@ -88,12 +93,9 @@ final class Options
      *
      * @return Options
      */
-    public static function getInstance(): Options
+    public static function getInstance(): self
     {
-        if (self::$instance === null) {
-            self::$instance = new self();
-        }
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
     /**
@@ -143,6 +145,7 @@ final class Options
     private function saveDatabase() : void
     {
         $count = count($this->initialize()->queue);
+        $this->destructedSave = false;
         if ($count === 0) {
             return;
         }
@@ -159,7 +162,7 @@ final class Options
             // use traditional mysql replace
             $table = self::TABLE_OPTIONS;
             $sql = "REPLACE INTO `$table` (`name`, `value`) VALUES ";
-            $sql .= implode(', ', array_map(static function ($item) {
+            $sql .= implode(', ', array_map(static function () {
                 return '(?, ?)';
             }, $inserts));
             $binding = [];
@@ -285,7 +288,7 @@ final class Options
         ];
 
         unset($this->notExists[$name], $this->options[$name]);
-        if (count($this->queue) >= self::MAX_QUEUE) {
+        if ($this->destructedSave || count($this->queue) >= self::MAX_QUEUE) {
             $this->saveDatabase();
         }
         return true;
@@ -365,5 +368,6 @@ final class Options
     public function __destruct()
     {
         $this->saveDatabase();
+        $this->destructedSave = true;
     }
 }

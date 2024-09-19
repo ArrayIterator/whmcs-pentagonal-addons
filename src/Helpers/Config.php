@@ -14,12 +14,12 @@ final class Config
     /**
      * @var null|array $originalConfig the original config
      */
-    protected static $originalConfig = null;
+    protected static ?array $originalConfig = null;
 
     /**
      * @var array|null $config the config
      */
-    protected static $config = null;
+    protected static ?array $config = null;
 
     /**
      * Get global config

@@ -14,7 +14,7 @@ class LogHandler extends AbstractProcessingHandler
     /**
      * @var array<LogWriterInterface> $writers
      */
-    protected $writers = [];
+    protected array $writers = [];
 
     /**
      * Push the writer

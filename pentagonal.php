@@ -44,10 +44,10 @@ if (!defined("WHMCS")) {
      */
     function pentagonal_config()
     {
-        if ((PHP_VERSION_ID < 70200)) {
+        if ((PHP_VERSION_ID < 70400)) {
             return [
                 'name' => 'Pentagonal Addon',
-                'description' => 'PHP Version must be 7.2 or greater',
+                'description' => 'PHP Version must be 7.4 or greater',
                 'version' => 'unknown',
                 'author' => 'Pentagonal',
                 'language' => 'english',

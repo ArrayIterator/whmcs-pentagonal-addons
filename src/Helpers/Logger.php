@@ -101,17 +101,17 @@ final class Logger
     /**
      * @var MonologLogger $logger the logger
      */
-    private $logger;
+    private MonologLogger $logger;
 
     /**
      * @var Logger $instance the instance
      */
-    private static $instance;
+    private static self $instance;
 
     /**
      * @var DatabaseWriter $databaseWriter the database writer
      */
-    private $databaseWriter;
+    private DatabaseWriter $databaseWriter;
 
     /**
      * Logger constructor.
@@ -125,13 +125,9 @@ final class Logger
      *
      * @return Logger the instance
      */
-    public static function getInstance(): Logger
+    public static function getInstance(): self
     {
-        if (isset(self::$instance)) {
-            return self::$instance;
-        }
-        self::$instance = new self();
-        return self::$instance;
+        return self::$instance ??= new self();
     }
 
     /**
@@ -139,11 +135,7 @@ final class Logger
      */
     public function getDatabaseWriter(): DatabaseWriter
     {
-        if (isset($this->databaseWriter)) {
-            return $this->databaseWriter;
-        }
-        $this->databaseWriter = new DatabaseWriter();
-        return $this->databaseWriter;
+        return $this->databaseWriter ??= new DatabaseWriter();
     }
 
     /**

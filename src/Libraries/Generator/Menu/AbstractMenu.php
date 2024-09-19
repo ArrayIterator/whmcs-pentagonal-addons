@@ -10,28 +10,51 @@ use function uasort;
 
 abstract class AbstractMenu
 {
-    protected $menus;
+    /**
+     * @var Menus $menus Menus Instance
+     */
+    protected Menus $menus;
 
-    private static $menuIncrement = 0;
+    /**
+     * @var int $menuIncrement Incremental Menu
+     */
+    private static int $menuIncrement = 0;
 
-    protected $id = '';
+    /**
+     * @var string $id Menu ID
+     */
+    protected string $id = '';
 
-    protected $priority = 10;
+    /**
+     * @var int $priority Menu Priority
+     */
+    protected int $priority = 10;
 
+    /**
+     * @var string|mixed|null $link Menu Link
+     */
     protected $link = null;
 
-    protected $linkText = null;
+    /**
+     * @var string|null $linkText Menu Link Text
+     */
+    protected ?string $linkText = null;
 
     /**
      * @var array
      */
-    protected $attributes = [];
+    protected array $attributes = [];
 
     /**
      * @var array<string, AbstractMenu>
      */
-    private $subMenus = [];
+    private array $subMenus = [];
 
+    /**
+     * AbstractMenu constructor.
+     *
+     * @param Menus $menus Menus Instance
+     */
     public function __construct(Menus $menus)
     {
         $this->menus = $menus;
@@ -39,6 +62,9 @@ abstract class AbstractMenu
         $this->setAttributes($this->attributes);
     }
 
+    /**
+     * @return Menus Menus Instance
+     */
     public function getMenus(): Menus
     {
         return $this->menus;

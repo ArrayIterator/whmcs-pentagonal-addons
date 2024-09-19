@@ -5,15 +5,17 @@ namespace Pentagonal\Neon\WHMCS\Addon\Libraries;
 
 use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
-use Pentagonal\Neon\WHMCS\Addon\Helpers\ServiceInclude;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
+use Pentagonal\Neon\WHMCS\Addon\Schema\ThemeSchema;
 use Pentagonal\Neon\WHMCS\Addon\Services\AdminService;
 use Pentagonal\Neon\WHMCS\Addon\Services\Hooks;
+use Pentagonal\Neon\WHMCS\Addon\Services\ThemeService;
 use ReflectionClass;
 use Throwable;
-use WHMCS\View\Template\Theme;
+use function file_exists;
 
 class Services implements ServicesInterface
 {
@@ -62,6 +64,7 @@ class Services implements ServicesInterface
      * @var class-string<ServiceInterface>[]
      */
     public const PROTECTED_SERVICES = [
+        ThemeService::class,
         AdminService::class,
         Hooks::class
     ];
@@ -69,32 +72,32 @@ class Services implements ServicesInterface
     /**
      * @var array<string, class-string<ServiceInterface|false> $cachedClass the cached class
      */
-    private static $cachedClass = [];
+    private static array $cachedClass = [];
 
     /**
      * @var class-string<ServiceInterface>[] $protectedServices the protected services
      */
-    protected $protectedServices = self::PROTECTED_SERVICES;
+    protected array $protectedServices = self::PROTECTED_SERVICES;
 
     /**
      * @var Core $core the core instance
      */
-    protected $core;
+    protected Core $core;
 
     /**
      * @var Collector<ServiceInterface[]> $services the services
      */
-    private $services;
+    private Collector $services;
 
     /**
      * @var bool $inProcess the process status
      */
-    private $inProcess = false;
+    private bool $inProcess = false;
 
     /**
      * @var bool $initialized is initialized
      */
-    private $initialized = false;
+    private bool $initialized = false;
 
     /**
      * @inheritDoc
@@ -228,7 +231,7 @@ class Services implements ServicesInterface
         if ($this->inProcess) {
             return;
         }
-        $em = $this->core->getEventManager();
+        $em = $this->getCore()->getEventManager();
         $this->inProcess = true;
         $this->init();
         try {
@@ -266,7 +269,7 @@ class Services implements ServicesInterface
      */
     public function getEventManager(): EventManager
     {
-        return $this->core->getEventManager();
+        return $this->getCore()->getEventManager();
     }
 
     /**
@@ -281,19 +284,19 @@ class Services implements ServicesInterface
             return;
         }
         $this->initialized = true;
-        $em = $this->core->getEventManager();
+        $em = $this->getCore()->getEventManager();
         try {
             $em->apply(self::EVENT_BEFORE_SERVICES_INIT, $this);
-            $theme = $this->getCore()->getTheme();
-            if (!$theme instanceof Theme) {
+            $themeSchema = $this->getCore()->getSchemas()->get(ThemeSchema::class);
+            if (!$themeSchema instanceof ThemeSchema || !$themeSchema->isValid()) {
                 return;
             }
-            $activeTemplate = $theme->getTemplatePath();
-            if (!is_dir($activeTemplate)) {
+            $serviceFile = $themeSchema->getServiceFile();
+            if (!$serviceFile || !file_exists($serviceFile)) {
                 return;
             }
             // no-catch
-            ServiceInclude::include($this, $activeTemplate . '/services.php');
+            StaticInclude::include($serviceFile, ['services' => $this]);
         } catch (Throwable $e) {
             Logger::error($e, [
                 'type' => 'service',

@@ -3,27 +3,30 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 
-use WHMCS\Module\Addon\Setting;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Models\AddonSetting;
 use WHMCS\User\Admin;
 use WHMCS\User\User as WhmcsUser;
+use function explode;
+use function in_array;
 use function is_numeric;
+use function is_string;
 
 final class User
 {
     /**
      * @var array{int, Admin|false}[] $admins The admins
      */
-    protected static $admins = [];
+    protected static array $admins = [];
 
     /**
      * @var array{int, WhmcsUser|false}[] $users the users
      */
-    protected static $users = [];
+    protected static array $users = [];
 
     /**
      * @var array $moduleAccess the module access
      */
-    protected static $moduleAccess = [];
+    protected static array $moduleAccess = [];
 
     /**
      * Get the user id
@@ -87,12 +90,35 @@ final class User
         return self::$users[$userId]?:null;
     }
 
-    public static function adminAllowAccessModule(string $moduleName)
+    /**
+     * Check if the admin allowed to access the module
+     *
+     * @param string $moduleName
+     * @return bool true if the admin is allowed to access the module
+     */
+    public static function adminAllowAccessModule(string $moduleName) : bool
     {
-        /** @noinspection PhpUndefinedMethodInspection */
-        $settings = Setting::where('module', trim($moduleName))
-            ->where('setting', 'access')
-            ->first();
-        print_r($settings);
+        $admin = User::admin();
+        if (!$admin) {
+            return false;
+        }
+        if (isset(self::$moduleAccess[$moduleName])) {
+            return self::$moduleAccess[$moduleName];
+        }
+        $roleId = $admin->getAttribute('roleid');
+        self::$moduleAccess[$moduleName] = false;
+        if ($roleId === null) {
+            return false;
+        }
+        $settings = AddonSetting::find($moduleName, 'access');
+        if (!$settings) {
+            return false;
+        }
+        $values = $settings->getAttribute('value');
+        if (!is_string($values)) {
+            return false;
+        }
+        $allowedRoles = explode(',', $values);
+        return self::$moduleAccess[$moduleName] = in_array($roleId, $allowedRoles);
     }
 }

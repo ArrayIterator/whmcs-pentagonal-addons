@@ -9,7 +9,6 @@ use function array_filter;
 use function array_unique;
 use function get_class;
 use function is_array;
-use function is_int;
 use function is_string;
 use function strrpos;
 use function substr;
@@ -30,22 +29,22 @@ abstract class AbstractBaseHook implements HookInterface
     /**
      * @var string $hookName The hook name
      */
-    protected $name;
+    protected string $name;
 
     /**
      * @var int $priority The hook priority
      */
-    protected $priority = 10;
+    protected int $priority = 10;
 
     /**
      * @var HooksServiceInterface $hooksService The service
      */
-    private $hooksService;
+    private HooksServiceInterface $hooksService;
 
     /**
      * @var bool $dispatched The hook dispatched status
      */
-    private $dispatched = false;
+    private bool $dispatched = false;
 
     /**
      * @var array|mixed $vars The hook vars
@@ -77,7 +76,7 @@ abstract class AbstractBaseHook implements HookInterface
      */
     public function getName(): string
     {
-        if (!isset($this->name) || !is_string($this->name)) {
+        if (!isset($this->name)) {
             $className = get_class($this);
             $this->name = substr($className, strrpos($className, '\\') + 1);
         }
@@ -104,9 +103,6 @@ abstract class AbstractBaseHook implements HookInterface
      */
     public function getPriority(): int
     {
-        if (!is_int($this->priority)) {
-            $this->priority = 10;
-        }
         return $this->priority;
     }
 

@@ -62,27 +62,27 @@ class DatabaseWriter implements LogWriterInterface
      *     extra: array<string, mixed> | null
      *  }> $queue the queue
      */
-    protected $queue = [];
+    protected array $queue = [];
 
     /**
      * @var bool $initialized the initialized
      */
-    private $initialized = false;
+    private bool $initialized = false;
 
     /**
      * @var bool $enabled the enabled
      */
-    protected $enabled = true;
+    protected bool $enabled = true;
 
     /**
      * @var int $initialLogCount the initial length
      */
-    private $initialLogCount = 0;
+    private int $initialLogCount = 0;
 
     /**
      * @var int $limitLogRecords the limit log records
      */
-    private $limitLogRecords = self::CLEAN_LOG_COUNT;
+    private int $limitLogRecords = self::CLEAN_LOG_COUNT;
 
     /**
      * @return void

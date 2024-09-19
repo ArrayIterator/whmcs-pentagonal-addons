@@ -26,13 +26,16 @@ abstract class AbstractExtended implements ExtendedInterface
     /**
      * @var static $instance the instance
      */
-    protected static $instance;
+    protected static AbstractExtended $instance;
 
     /**
      * @var mixed $facadeApplication the facade application
      */
     protected $facadeApplication = null;
 
+    /**
+     * AbstractExtended constructor.
+     */
     final protected function __construct()
     {
     }
@@ -114,14 +117,11 @@ abstract class AbstractExtended implements ExtendedInterface
      * @inheritDoc
      * @return static
      */
-    public static function getInstance(): ExtendedInterface
+    public static function getInstance(): AbstractExtended
     {
         if (static::class === __CLASS__) {
             throw new RuntimeException('Cannot instantiate abstract class ' . __CLASS__);
         }
-        if (!static::$instance) {
-            static::$instance = new static();
-        }
-        return static::$instance;
+        return static::$instance ??= new static();
     }
 }

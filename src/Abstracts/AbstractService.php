@@ -9,7 +9,6 @@ use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
 use function get_class;
 use function in_array;
-use function is_string;
 use function strrpos;
 use function strtolower;
 use function substr;
@@ -24,27 +23,27 @@ abstract class AbstractService implements ServiceInterface
     /**
      * @var string $name the service friendly name
      */
-    protected $name;
+    protected string $name;
 
     /**
      * @var string $category the service category
      */
-    protected $category = 'utility';
+    protected string $category;
 
     /**
      * @var string $description the service description
      */
-    protected $description = '';
+    protected string $description;
 
     /**
      * @var ServicesInterface $services
      */
-    protected $services;
+    protected ServicesInterface $services;
 
     /**
      * @var bool $hasRun
      */
-    private $hasRun = false;
+    private bool $hasRun = false;
 
     /**
      * @var mixed $result
@@ -72,7 +71,7 @@ abstract class AbstractService implements ServiceInterface
      */
     public function getName(): string
     {
-        if (!is_string($this->name)) {
+        if (!isset($this->name)) {
             $className = get_class($this);
             $name = substr($className, strrpos($className, '\\') + 1);
             $this->name = $name;
@@ -85,9 +84,7 @@ abstract class AbstractService implements ServiceInterface
      */
     public function getCategory(): string
     {
-        if (!is_string($this->category)) {
-            $this->category = self::DEFAULT_CATEGORY;
-        }
+        $this->category ??= self::DEFAULT_CATEGORY;
         if (!in_array($this->category, self::CATEGORIES)) {
             $this->category = strtolower(trim($this->category));
             $this->category = !in_array($this->category, self::CATEGORIES)
@@ -102,10 +99,7 @@ abstract class AbstractService implements ServiceInterface
      */
     public function getDescription(): string
     {
-        if (!is_string($this->description)) {
-            $this->description = '';
-        }
-        return $this->description;
+        return $this->description ??= '';
     }
 
     /**
@@ -129,10 +123,12 @@ abstract class AbstractService implements ServiceInterface
     /**
      * Method to dispatch the service when the service is runnable
      *
+     * @param mixed $arg
      * @param ...$args
      * @abstract
+     * @noinspection PhpUnusedParameterInspection
      */
-    protected function dispatch(...$args)
+    protected function dispatch($arg = null, ...$args)
     {
         return null;
     }
