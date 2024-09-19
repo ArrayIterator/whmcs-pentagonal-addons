@@ -160,7 +160,6 @@ class Core
         if (!in_array($file, [$addonFile, $hooksFile])) {
             return $this;
         }
-
         $em = $this->getEventManager();
         Logger::debug('Dispatching Core');
         $this->dispatched = true;

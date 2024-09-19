@@ -27,8 +27,7 @@ class Schemas
      * @var array<class-string<T>, true> $keep the keep
      */
     private array $keep = [
-        ThemeSchema::class => true,
-        OptionSchema::class => true,
+        StructureSchema::class => true
     ];
 
     /**

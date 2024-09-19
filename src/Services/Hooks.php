@@ -9,13 +9,14 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaMenuButton;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaHeadOutput;
+use Pentagonal\Neon\WHMCS\Addon\Hooks\ThemeSetting;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\VersionHook;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HookDispatcherInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HookInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HooksServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\HookDispatcher;
-use Pentagonal\Neon\WHMCS\Addon\Schema\ThemeSchema;
+use Pentagonal\Neon\WHMCS\Addon\Schema\StructureSchema;
 use ReflectionClass;
 use Throwable;
 use function array_shift;
@@ -50,6 +51,7 @@ class Hooks extends AbstractService implements HooksServiceInterface
      */
     public const HOOK_FACTORIES = [
         VersionHook::class,
+        ThemeSetting::class,
         AdminAreaHeadOutput::class,
         AdminAreaMenuButton::class,
     ];
@@ -334,8 +336,8 @@ class Hooks extends AbstractService implements HooksServiceInterface
         $em = $this->getServices()->getCore()->getEventManager();
         try {
             $em->apply(self::EVENT_BEFORE_HOOKS_INIT, $this);
-            $themeHook = $this->getServices()->getCore()->getSchemas()->get(ThemeSchema::class);
-            if (!$themeHook instanceof ThemeSchema || !$themeHook->isValid()) {
+            $themeHook = $this->getServices()->getCore()->getSchemas()->get(StructureSchema::class);
+            if (!$themeHook instanceof StructureSchema || !$themeHook->isValid()) {
                 return;
             }
             $hooksFile = $themeHook->getHooksFile();

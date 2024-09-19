@@ -5,12 +5,13 @@ namespace Pentagonal\Neon\WHMCS\Addon\Schema;
 
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\ThemeSchemaInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaThemeConstructorTrait;
+use function dirname;
 use function file_exists;
 use function is_bool;
 use function realpath;
 use const DIRECTORY_SEPARATOR;
 
-class ThemeSchema implements ThemeSchemaInterface
+class StructureSchema implements ThemeSchemaInterface
 {
     use SchemaThemeConstructorTrait;
 
@@ -165,11 +166,20 @@ class ThemeSchema implements ThemeSchemaInterface
     }
 
     /**
+     * Get settings
+     * @return array
+     */
+    public function getSettings() : array
+    {
+        return $this->get('settings')??[];
+    }
+
+    /**
      * @inheritDoc
      */
     public function getRefSchemaFile(): string
     {
-        $file = __DIR__ .'/SchemaFiles/theme.json';
+        $file = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'schema' . DIRECTORY_SEPARATOR . 'options+themes.json';
         return $this->refSchemaFile ??= file_exists($file)
             ? (realpath($file)?:$file)
             :  self::REF;

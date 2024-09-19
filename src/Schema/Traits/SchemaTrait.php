@@ -9,9 +9,11 @@ use Swaggest\JsonSchema\SchemaContract;
 use Swaggest\JsonSchema\Structure\ObjectItemContract;
 use Throwable;
 use function file_get_contents;
+use function is_array;
 use function is_object;
 use function json_decode;
 use function set_error_handler;
+use function sprintf;
 use const E_USER_WARNING;
 
 trait SchemaTrait
@@ -170,6 +172,27 @@ trait SchemaTrait
     public function getSchemaArray() : array
     {
         $schema = $this->getSchema();
-        return $schema ? $schema->toArray() : [];
+        $constNested = static function ($schema) use (&$constNested) {
+            $schema = $schema instanceof ObjectItemContract ? $schema->toArray() : $schema;
+            if (!is_array($schema)) {
+                return $schema;
+            }
+            $arrays = [];
+            foreach ($schema as $name => $property) {
+                if ($property instanceof ObjectItemContract) {
+                    $arrays[$name] = $constNested($property);
+                    continue;
+                }
+                $arrays[$name] = $property;
+            }
+            return $arrays;
+        };
+        return $constNested($schema)??[];
     }
+//    public function __debugInfo()
+//    {
+//        $object = get_object_vars($this);
+//        $object['schema'] = sprintf('%s(%s)', get_class($object['schema']), spl_object_hash($object['schema']));
+//        return $object;
+//    }
 }

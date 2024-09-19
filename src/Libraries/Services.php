@@ -9,7 +9,7 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\ThemeSchema;
+use Pentagonal\Neon\WHMCS\Addon\Schema\StructureSchema;
 use Pentagonal\Neon\WHMCS\Addon\Services\AdminService;
 use Pentagonal\Neon\WHMCS\Addon\Services\Hooks;
 use Pentagonal\Neon\WHMCS\Addon\Services\ThemeService;
@@ -287,8 +287,8 @@ class Services implements ServicesInterface
         $em = $this->getCore()->getEventManager();
         try {
             $em->apply(self::EVENT_BEFORE_SERVICES_INIT, $this);
-            $themeSchema = $this->getCore()->getSchemas()->get(ThemeSchema::class);
-            if (!$themeSchema instanceof ThemeSchema || !$themeSchema->isValid()) {
+            $themeSchema = $this->getCore()->getSchemas()->get(StructureSchema::class);
+            if (!$themeSchema instanceof StructureSchema || !$themeSchema->isValid()) {
                 return;
             }
             $serviceFile = $themeSchema->getServiceFile();

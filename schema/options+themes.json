@@ -1,0 +1,1014 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://hub.pentagonal.org/schemas/options+themes.json",
+    "type": "object",
+    "title": "Schema for Themes",
+    "description": "The schema",
+    "version": "1.0.0",
+    "required": [
+        "name"
+    ],
+    "additionalProperties": false,
+    "definitions": {
+        "title": {
+            "description": "The title of the definition",
+            "required": [
+                "title"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "title": {
+                    "description": "The title of the definition",
+                    "type": "string"
+                },
+                "tag": {
+                    "description": "The tag of the title",
+                    "default": "h2",
+                    "enum": [
+                        "h1",
+                        "h2",
+                        "h3",
+                        "h4",
+                        "h5",
+                        "h6",
+                        "div"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "settings": {
+            "description": "The settings of the definition",
+            "type": [
+                "object",
+                "array"
+            ],
+            "oneOf": [
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/checkBox"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/radio"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/toggle"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/html"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/group"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/title"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/spacer"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/text"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/hidden"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/textarea"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/select"
+                },
+                {
+                    "type": "object",
+                    "$ref": "#/definitions/input"
+                }
+            ]
+        },
+        "htmlTagAttributes": {
+            "description": "The html tag attributes of the definition",
+            "additionalProperties": false,
+            "properties": {
+                "data": {
+                    "description": "The data-* attributes of the tag",
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "number",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                },
+                "aria": {
+                    "description": "The aria-* attributes of the tag",
+                    "minProperties": 1,
+                    "additionalProperties": false,
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "number",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                },
+                "class": {
+                    "description": "The class attribute of the tag",
+                    "type": "object",
+                    "oneOf": [
+                        {
+                            "description": "The class attribute of the tag",
+                            "pattern": "^([a-z0-9:-]+)$",
+                            "type": "string"
+                        },
+                        {
+                            "items": {
+                                "description": "The class list attribute of the tag",
+                                "pattern": "^([a-z0-9:-]+)$",
+                                "minItems": 1,
+                                "type": "string"
+                            },
+                            "type": "array"
+                        }
+                    ]
+                }
+            },
+            "type": "object"
+        },
+        "checkBox": {
+            "description": "The checkbox attributes of the definition",
+            "required": [
+                "label",
+                "name",
+                "value"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "multiple": {
+                    "description": "The multiple attribute of the checkbox",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "required": {
+                    "description": "The required attribute of the checkbox",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "checked": {
+                    "description": "The checked attribute of the checkbox",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "label": {
+                    "description": "The label of the checkbox",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the checkbox",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the checkbox",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of the checkbox",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the checkbox",
+                    "default": "checkbox",
+                    "enum": [
+                        "checkbox"
+                    ],
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "The attributes",
+                    "default": {},
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "toggle": {
+            "description": "The toggle checkbox attributes of the definition",
+            "required": [
+                "label",
+                "name",
+                "value"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "multiple": {
+                    "description": "The multiple attribute of the toggle",
+                    "enum": [
+                        false
+                    ],
+                    "type": "boolean"
+                },
+                "required": {
+                    "description": "The required attribute of the toggle",
+                    "enum": [
+                        false
+                    ],
+                    "type": "boolean"
+                },
+                "checked": {
+                    "description": "The checked attribute of the toggle",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "label": {
+                    "description": "The label of the toggle",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the toggle",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the toggle",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of the toggle",
+                    "default": "1",
+                    "enum": [
+                        "1",
+                        "0"
+                    ],
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the toggle",
+                    "default": "toggle",
+                    "enum": [
+                        "toggle"
+                    ],
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "The attributes",
+                    "default": {},
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "radio": {
+            "description": "The radio attributes of the definition",
+            "required": [
+                "label",
+                "name",
+                "value"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "multiple": {
+                    "description": "The multiple attribute of the radio",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "required": {
+                    "description": "The required attribute of the radio",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "checked": {
+                    "description": "The checked attribute of the radio",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "label": {
+                    "description": "The label of the radio",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the radio",
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the radio",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of the radio",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the radio",
+                    "default": "radio",
+                    "enum": [
+                        "radio"
+                    ],
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "The attributes",
+                    "default": {},
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "html": {
+            "description": "The html attributes of the definition",
+            "required": [
+                "html"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "html": {
+                    "description": "The html of the definition",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the html",
+                    "default": "html",
+                    "enum": [
+                        "html"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "group": {
+            "description": "The group attributes of the definition",
+            "required": [
+                "group"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "group": {
+                    "description": "The group of the definition",
+                    "type": "object",
+                    "$ref": "#/definitions/settings"
+                },
+                "type": {
+                    "description": "The type of the group",
+                    "default": "group",
+                    "enum": [
+                        "group"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "spacer": {
+            "description": "The spacer attributes of the definition",
+            "required": [
+                "type"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "type": {
+                    "description": "The type of the spacer",
+                    "default": "spacer",
+                    "enum": [
+                        "spacer"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "object"
+        },
+        "textarea": {
+            "description": "The textarea attributes of the definition",
+            "required": [
+                "name",
+                "label"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "type": {
+                    "description": "The type of the textarea",
+                    "default": "textarea",
+                    "enum": [
+                        "textarea"
+                    ],
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the textarea",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "The label of the textarea",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the textarea",
+                    "type": "string"
+                },
+                "default": {
+                    "description": "The default value of the textarea",
+                    "type": "string"
+                },
+                "placeholder": {
+                    "description": "The placeholder of the textarea",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of the textarea",
+                    "type": "string"
+                },
+                "required": {
+                    "description": "The required attribute of the textarea",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "disabled": {
+                    "description": "The disabled attribute of the textarea",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "readonly": {
+                    "description": "The readonly attribute of the textarea",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "rows": {
+                    "description": "The rows of the textarea",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "cols": {
+                    "description": "The cols of the textarea",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "maxlength": {
+                    "description": "The maxlength attribute of the textarea",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "minlength": {
+                    "description": "The minlength attribute of the textarea",
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "attributes": {
+                    "description": "The attributes",
+                    "default": {},
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "text": {
+            "description": "The text of the definition",
+            "required": [
+                "text"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "text": {
+                    "description": "The text of the definition",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the text",
+                    "default": "text",
+                    "enum": [
+                        "text"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "hidden": {
+            "description": "The hidden input of the definition",
+            "required": [
+                "value"
+            ],
+            "additionalProperties": false,
+            "properties": {
+                "value": {
+                    "description": "The value of the hidden input",
+                    "type": "string"
+                },
+                "type": {
+                    "description": "The type of the hidden input",
+                    "default": "hidden",
+                    "enum": [
+                        "hidden"
+                    ],
+                    "type": "string"
+                }
+            },
+            "type": "string"
+        },
+        "select": {
+            "description": "The select attributes of the definition",
+            "required": [
+                "name",
+                "label",
+                "options"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "name": {
+                    "description": "The name of the select",
+                    "type": "string"
+                },
+                "label": {
+                    "description": "The label of the select",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the select",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of the select",
+                    "type": "string"
+                },
+                "placeholder": {
+                    "description": "The placeholder of the select",
+                    "type": "string"
+                },
+                "multiple": {
+                    "description": "The multiple attribute of the select",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "required": {
+                    "description": "The required attribute of the select",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "options": {
+                    "type": "array",
+                    "oneOf": [
+                        {
+                            "description": "The options of the select",
+                            "items": {
+                                "required": [
+                                    "label",
+                                    "value"
+                                ],
+                                "additionalProperties": false,
+                                "properties": {
+                                    "label": {
+                                        "type": "string"
+                                    },
+                                    "value": {
+                                        "type": "string"
+                                    },
+                                    "disabled": {
+                                        "type": "boolean"
+                                    },
+                                    "selected": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "array"
+                            },
+                            "required": [
+                                "label",
+                                "value"
+                            ],
+                            "type": "object"
+                        },
+                        {
+                            "description": "The optgroup of the select",
+                            "required": [
+                                "label",
+                                "type",
+                                "options"
+                            ],
+                            "additionalProperties": false,
+                            "properties": {
+                                "label": {
+                                    "description": "Label of optgroup",
+                                    "type": "string"
+                                },
+                                "type": {
+                                    "default": "optgroup",
+                                    "type": "string"
+                                },
+                                "options": {
+                                    "$ref": "#/definitions/select/properties/options"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    ]
+                },
+                "type": {
+                    "description": "The type of the select",
+                    "default": "select",
+                    "enum": [
+                        "select"
+                    ],
+                    "type": "string"
+                },
+                "attributes": {
+                    "description": "The attributes",
+                    "default": {},
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        },
+        "input": {
+            "description": "The input attributes of the definition",
+            "required": [
+                "name"
+            ],
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/htmlTagAttributes"
+            },
+            "properties": {
+                "type": {
+                    "description": "The type of the input",
+                    "default": "input",
+                    "enum": [
+                        "input"
+                    ],
+                    "type": "string"
+                },
+                "name": {
+                    "description": "The name of the input",
+                    "type": "string"
+                },
+                "input": {
+                    "description": "The input type of the input",
+                    "default": "text",
+                    "enum": [
+                        "text",
+                        "password",
+                        "email",
+                        "number",
+                        "tel",
+                        "url",
+                        "search",
+                        "date",
+                        "time",
+                        "datetime-local",
+                        "month",
+                        "week",
+                        "color",
+                        "file",
+                        "hidden",
+                        "image",
+                        "range",
+                        "reset",
+                        "submit"
+                    ],
+                    "type": "string"
+                },
+                "placeholder": {
+                    "description": "The placeholder of the input",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value of the input",
+                    "type": "string"
+                },
+                "required": {
+                    "description": "The required attribute of the input",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "disabled": {
+                    "description": "The disabled attribute of the input",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "readonly": {
+                    "description": "The readonly attribute of the input",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "multiple": {
+                    "description": "The multiple attribute of the input",
+                    "default": false,
+                    "type": "boolean"
+                },
+                "pattern": {
+                    "description": "The pattern attribute of the input",
+                    "default": null,
+                    "type": "string",
+                    "format": "regex"
+                },
+                "label": {
+                    "description": "The label of the input",
+                    "default": null,
+                    "type": [
+                        "string",
+                        "null"
+                    ]
+                },
+                "default": {
+                    "description": "The default value of the input",
+                    "default": "",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of the input",
+                    "default": "",
+                    "type": "string"
+                },
+                "minlength": {
+                    "description": "The minlength attribute of the input",
+                    "default": null,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "maxlength": {
+                    "description": "The maxlength attribute of the input",
+                    "default": null,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "min": {
+                    "description": "The min attribute of the input",
+                    "default": null,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "max": {
+                    "description": "The max attribute of the input",
+                    "default": null,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "step": {
+                    "description": "The step attribute of the input",
+                    "default": null,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "size": {
+                    "description": "The size attribute of the input",
+                    "default": null,
+                    "type": [
+                        "integer",
+                        "null"
+                    ]
+                },
+                "attributes": {
+                    "description": "The attributes",
+                    "default": {},
+                    "patternProperties": {
+                        "^([a-z]+([a-z0-9-]*[a-z]+)?)$": {
+                            "type": [
+                                "string",
+                                "integer",
+                                "boolean",
+                                "null"
+                            ]
+                        }
+                    },
+                    "type": "object",
+                    "not": {
+                        "type": "object",
+                        "$ref": "#/definitions/htmlTagAttributes"
+                    }
+                }
+            },
+            "type": "object"
+        }
+    },
+    "properties": {
+        "$schema": {
+            "description": "The schema uri of the schema",
+            "type": "string"
+        },
+        "$id": {
+            "description": "The id of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "name": {
+            "description": "The name of the schema",
+            "type": "string"
+        },
+        "version": {
+            "description": "The version of the schema",
+            "type": "string"
+        },
+        "url": {
+            "description": "The url of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "author": {
+            "description": "The author of the schema",
+            "type": "string"
+        },
+        "author_url": {
+            "description": "The author url of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "license": {
+            "description": "The license of the schema",
+            "type": "string"
+        },
+        "license_url": {
+            "description": "The license url of the schema",
+            "type": "string",
+            "format": "uri"
+        },
+        "date": {
+            "description": "The date of created of the schema",
+            "type": "string",
+            "format": "date-time"
+        },
+        "updated": {
+            "description": "The date of updated of the schema",
+            "type": "string",
+            "format": "date-time"
+        },
+        "description": {
+            "description": "The description of the schema",
+            "type": "string"
+        },
+        "language_directory": {
+            "description": "The language directory of the schema",
+            "default": "languages",
+            "type": "string"
+        },
+        "hooks": {
+            "description": "Enable or disable hook",
+            "default": true,
+            "type": "boolean"
+        },
+        "services": {
+            "description": "Enable or disable services",
+            "default": true,
+            "type": "boolean"
+        },
+        "translate": {
+            "description": "The translatable or not of the schema",
+            "default": true,
+            "type": "boolean"
+        },
+        "changelog": {
+            "description": "The changelog of the schema",
+            "default": [],
+            "items": {
+                "additionalProperties": true,
+                "properties": {
+                    "version": {
+                        "type": "string"
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                },
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "metadata": {
+            "description": "The metadata of the schema",
+            "default": {},
+            "additionalProperties": true,
+            "type": "object"
+        },
+        "settings": {
+            "description": "The settings for the schema",
+            "items": {
+                "type": "object",
+                "$ref": "#/definitions/settings"
+            },
+            "additionalProperties": {
+                "type": "object",
+                "$ref": "#/definitions/settings"
+            },
+            "type": [
+                "object",
+                "array"
+            ]
+        }
+    }
+}
