@@ -596,9 +596,6 @@ HTML;
                 $smarty->assign('content', $content);
                 $smarty->fetch('content.tpl');
             }
-            echo "<pre>";
-//            print_r($performance);
-            echo '</pre>';
         } catch (Throwable $e) {
             echo <<<HTML
 <div class="alert alert-danger">
