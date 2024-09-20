@@ -4,9 +4,10 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon;
 
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
-use Pentagonal\Neon\WHMCS\Addon\Libraries\Services;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Schemas;
 use Throwable;
 use WHMCS\Application;
@@ -41,11 +42,6 @@ class Core
     private bool $dispatched = false;
 
     /**
-     * @var Services the services
-     */
-    private Services $services;
-
-    /**
      * @var EventManager $manager the event manager
      */
     private EventManager $manager;
@@ -56,9 +52,24 @@ class Core
     private Application $whmcs;
 
     /**
+     * @var Services the services
+     */
+    private Services $services;
+
+    /**
+     * @var Hooks $hooks
+     */
+    private Hooks $hooks;
+
+    /**
      * @var Addon $addon the addon
      */
     private Addon $addon;
+
+    /**
+     * @var Plugins $plugins the plugins
+     */
+    private Plugins $plugins;
 
     /**
      * @var Schemas $schemas the schemas
@@ -126,6 +137,16 @@ class Core
     }
 
     /**
+     * Get hooks object
+     *
+     * @return Hooks
+     */
+    public function getHooks(): Hooks
+    {
+        return $this->hooks??= new Hooks($this);
+    }
+
+    /**
      * Get the addon object
      *
      * @return Addon
@@ -133,6 +154,16 @@ class Core
     public function getAddon(): Addon
     {
         return $this->addon ??= new Addon($this);
+    }
+
+    /**
+     * Get plugins object
+     *
+     * @return Plugins
+     */
+    public function getPlugins(): Plugins
+    {
+        return $this->plugins ??= new Plugins($this);
     }
 
     /**
@@ -160,6 +191,9 @@ class Core
         if (!in_array($file, [$addonFile, $hooksFile])) {
             return $this;
         }
+        $stopCode = Random::bytes();
+        $profiler = Performance::profile('core_dispatch', Core::class)
+            ->setStopCode($stopCode);
         $em = $this->getEventManager();
         Logger::debug('Dispatching Core');
         $this->dispatched = true;
@@ -176,15 +210,9 @@ class Core
                     ]
                 );
             }
-            $this->getServices()->run();
-        } catch (Throwable $e) {
-            Logger::error(
-                $e,
-                [
-                    'status' => 'error',
-                    'method' => 'dispatch',
-                ]
-            );
+
+            $this->runServices($stopCode);
+            $this->runHooks($stopCode);
         } finally {
             try {
                 $em->apply(self::EVENT_AFTER_CORE_DISPATCH, $this);
@@ -198,8 +226,51 @@ class Core
                     ]
                 );
             }
+            $profiler->stop([], $stopCode);
         }
         return $this;
+    }
+
+    /**
+     * Run the services
+     * @param string $stopCode
+     * @return void
+     */
+    private function runServices(string $stopCode)
+    {
+        $performance = Performance::profile('core_dispatch_services', Core::class)
+            ->setStopCode($stopCode);
+        try {
+            $this->getServices()->run();
+        } catch (Throwable $e) {
+            Logger::error($e, [
+                'type' => 'service',
+                'method' => 'run',
+            ]);
+        } finally {
+            $performance->stop([], $stopCode);
+        }
+    }
+
+    /**
+     * Run the hooks
+     *
+     * @return void
+     */
+    private function runHooks(string $stopCode)
+    {
+        $performance = Performance::profile('core_dispatch_hooks', Core::class)
+            ->setStopCode($stopCode);
+        try {
+            $this->getHooks()->run();
+        } catch (Throwable $e) {
+            Logger::error($e, [
+                'type' => 'service',
+                'method' => 'run',
+            ]);
+        } finally {
+            $performance->stop([], $stopCode);
+        }
     }
 
     /**
@@ -262,6 +333,9 @@ class Core
         $object = get_object_vars($this);
         $object['whmcs'] = sprintf('%s(%s)', get_class($object['whmcs']), spl_object_hash($object['whmcs']));
         $object['addon'] = sprintf('%s(%s)', get_class($object['addon']), spl_object_hash($object['addon']));
+        $object['services'] = sprintf('%s(%s)', get_class($object['services']), spl_object_hash($object['services']));
+        $object['hooks'] = sprintf('%s(%s)', get_class($object['hooks']), spl_object_hash($object['hooks']));
+        $object['plugins'] = sprintf('%s(%s)', get_class($object['plugins']), spl_object_hash($object['plugins']));
         return $object;
     }
 }

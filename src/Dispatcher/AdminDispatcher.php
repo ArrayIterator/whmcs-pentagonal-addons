@@ -6,8 +6,11 @@ namespace Pentagonal\Neon\WHMCS\Addon\Dispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Addon;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherResponseInterface;
 use Pentagonal\Neon\WHMCS\Addon\Extended\AdminLanguage;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\ApplicationConfig;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\SessionFlash;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\Generator\Menu\Menus;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\SmartyAdmin;
@@ -23,11 +26,13 @@ use function is_int;
 use function is_string;
 use function json_encode;
 use function ob_clean;
+use function ob_end_clean;
 use function ob_get_clean;
 use function ob_get_level;
 use function ob_start;
 use function preg_quote;
 use function preg_replace;
+use function print_r;
 use function realpath;
 use function strtolower;
 use function trim;
@@ -43,7 +48,7 @@ class AdminDispatcher
     /**
      * @var string PAGE_SELECTOR the page of admin
      */
-    public const PAGE_SELECTOR = 'page';
+    public const ROUTE_SELECTOR = 'route';
 
     /**
      * @var string TYPE_SELECTOR the type of admin page
@@ -73,7 +78,7 @@ class AdminDispatcher
     /**
      * @var string EVENT_ADDON_ADMIN_ON_POST_DATA on post data
      */
-    public const EVENT_ADMIN_OUTPUT_ON_POST_DATA = 'AdminDispatcherOutputOnPostData';
+    public const EVENT_ADMIN_OUTPUT_API_DATA = 'AdminDispatcherOutputAPIData';
 
     /**
      * @var SmartyAdmin $smarty the smarty object
@@ -196,7 +201,7 @@ class AdminDispatcher
     public function getPage() : ?string
     {
         if ($this->page === null) {
-            $page = $_GET[self::PAGE_SELECTOR]??null;
+            $page = $_GET[self::ROUTE_SELECTOR]??null;
             $this->page = !is_string($page) ? '' : trim($page);
             $this->page = $this->page === '' || strtolower($this->page) === 'index' ? 'index' : $this->page;
         }
@@ -300,6 +305,9 @@ class AdminDispatcher
      */
     private function processApi($response, $error)
     {
+        $stopCode = Random::bytes();
+        $performance = Performance::profile('admin_output_api', AdminDispatcher::class)
+            ->setStopCode($stopCode);
         $count = 0;
         // clear output buffer
         while (ob_get_level() > 1 && $count++ < 10) {
@@ -309,7 +317,7 @@ class AdminDispatcher
         if (!$error instanceof Throwable && $response instanceof Throwable) {
             $error = $response;
         }
-        $is_debug_part = ($GLOBALS['display_errors']??null) === true;
+        $is_debug_part = ApplicationConfig::get('display_errors') === true;
         $is_debug = $is_debug_part;
         $em = $this->getAdminService()->getServices()->getEventManager();
         try {
@@ -354,7 +362,7 @@ class AdminDispatcher
          * @param $code
          * @return never-returns
          */
-        $serverError = static function (Throwable $error, $code) use ($safeDir, $is_debug, $jsonOption) {
+        $serverError = static function (Throwable $error, $code) use ($safeDir, $is_debug, $jsonOption, $performance, $stopCode, $em) {
             header('Content-Type: application/json', true, $code);
             $content = [
                 'code' => $code,
@@ -373,7 +381,33 @@ class AdminDispatcher
                 }
                 $content['trace'] = $traces;
             }
-            echo json_encode($content, $jsonOption);
+            $performance->stop([
+                'error' => $error,
+                'code' => $code
+            ], $stopCode);
+            ob_start();
+            try {
+                $newContent = $em->apply(self::EVENT_ADMIN_OUTPUT_API_DATA, $content, $code);
+                if (!is_array($content) || ($content['code'] ?? null) !== $code || !array_key_exists('message', $content)) {
+                    $newContent = $content;
+                }
+            } catch (Throwable $e) {
+                Logger::error(
+                    $e,
+                    [
+                        'status' => 'error',
+                        'method' => 'processApi',
+                        'event' => self::EVENT_ADMIN_OUTPUT_API_DATA
+                    ]
+                );
+                $newContent = $content;
+            }
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            $content = null;
+            unset($content);
+            echo json_encode($newContent, $jsonOption);
             exit(0);
         };
 
@@ -382,37 +416,59 @@ class AdminDispatcher
          * @param ?int $code
          * @return never-returns
          */
-        $serverSuccess = static function ($data, ?int $code = null) use ($jsonOption) {
+        $serverSuccess = static function ($data, ?int $code = null) use ($jsonOption, $performance, $stopCode, $em) {
             if ($data instanceof DispatcherResponseInterface) {
-                header('Content-Type: application/json', true, $data->getStatusCode());
-                echo json_encode([
-                    'code' => $code,
-                    'data' => $data
-                ], $jsonOption);
-                exit(0);
-            }
-            if (is_array($data)) {
+                $response = [
+                    'code' => $data->getStatusCode(),
+                    'data' => $data->getData()
+                ];
+            } elseif (is_array($data)) {
                 $code = $data['code']??null;
                 if (!is_int($code) || $code < 100 || $code >= 600 || !array_key_exists('data', $data)) {
                     $code = null;
                 }
-                header('Content-Type: application/json', true, $code??200);
                 $data = count($data) === 2 && $code !== null && array_key_exists('data', $data)
                     ? $data
                     : [
                         'code' => $code??null,
                         'data' => $data
                     ];
-                echo json_encode($data, $jsonOption);
-                exit(0);
+                $response = $data;
+            } else {
+                $code = $code ?? 200;
+                $response = [
+                    'code' => $code,
+                    'data' => $data
+                ];
             }
-
-            $code = $code??200;
-            header('Content-Type: application/json', true, $code);
-            echo json_encode([
-                'code' => $code,
-                'data' => $data
-            ], $jsonOption);
+            ob_start();
+            $performance->stop([
+                'data' => $response['data'],
+                'code' => $response['code']
+            ], $stopCode);
+            try {
+                $newData = $em->apply(self::EVENT_ADMIN_OUTPUT_API_DATA, $response, $response['code']);
+                if (!is_array($newData) || ($newData['code'] ?? null) !== $response['code'] || !array_key_exists('data', $newData)) {
+                    $newData = $response;
+                }
+            } catch (Throwable $e) {
+                Logger::error(
+                    $e,
+                    [
+                        'status' => 'error',
+                        'method' => 'processApi',
+                        'event' => self::EVENT_ADMIN_OUTPUT_API_DATA
+                    ]
+                );
+                $newData = $response;
+            }
+            if (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+            $response = null;
+            unset($response);
+            header('Content-Type: application/json', true, $newData['code']);
+            echo json_encode($newData, $jsonOption);
             exit(0);
         };
 
@@ -456,7 +512,9 @@ class AdminDispatcher
         if ($admin === null || ! $this->getAdminService()->isAllowedAccessAddonPage()) {
             return;
         }
-
+        $stopCode = Random::bytes();
+        $performance = Performance::profile('admin_output', AdminDispatcher::class)
+            ->setStopCode($stopCode);
         try {
             $em->apply(self::EVENT_ADMIN_OUTPUT_BEFORE_RENDER, $vars);
         } catch (Throwable $e) {
@@ -481,6 +539,7 @@ class AdminDispatcher
         $content = $this->getHandler()->process($vars, $processed, $error);
         if ($this->isApi()) {
             $this->processApi($content, $error);
+            $performance->stop([], $stopCode);
             exit(0); // stop here
         }
 
@@ -537,6 +596,9 @@ HTML;
                 $smarty->assign('content', $content);
                 $smarty->fetch('content.tpl');
             }
+            echo "<pre>";
+//            print_r($performance);
+            echo '</pre>';
         } catch (Throwable $e) {
             echo <<<HTML
 <div class="alert alert-danger">
@@ -578,6 +640,13 @@ HTML;
             echo '</div>';
         }
 
+        // end container
+        echo '</div>';
+        // end section
+        echo '</div>';
+        echo DataNormalizer::forceBalanceTags(ob_get_clean());
+
+        $performance->stop([], $stopCode);
         try {
             $em->apply(self::EVENT_ADMIN_OUTPUT_AFTER_RENDER, $vars);
         } catch (Throwable $e) {
@@ -590,10 +659,5 @@ HTML;
                 ]
             );
         }
-        // end container
-        echo '</div>';
-        // end section
-        echo '</div>';
-        echo DataNormalizer::forceBalanceTags(ob_get_clean());
     }
 }

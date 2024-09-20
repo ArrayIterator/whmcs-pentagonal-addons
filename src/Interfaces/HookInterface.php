@@ -450,16 +450,16 @@ interface HookInterface
     /**
      * Hook constructor.
      *
-     * @param HooksServiceInterface $hooks
+     * @param HooksInterface $hooks
      */
-    public function __construct(HooksServiceInterface $hooks);
+    public function __construct(HooksInterface $hooks);
 
     /**
      * Get the service
      *
-     * @return HooksServiceInterface
+     * @return HooksInterface
      */
-    public function getHooksService(): HooksServiceInterface;
+    public function getHooksService(): HooksInterface;
 
     /**
      * Hook name

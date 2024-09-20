@@ -3,9 +3,15 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces;
 
-interface ThemeSchemaInterface extends JsonSchemaInterface
+use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Themes;
+use stdClass;
+
+interface ThemeSchemaInterface extends SingleSchemaInterface
 {
-    public const REF = "https://hub.pentagonal.org/schemas/whmcs/addons/pentagonal/theme.json";
+    /**
+     * @return ?Themes
+     */
+    public function getSchema(): ?Themes;
 
     /**
      * Get the schema source keyof : $schema
@@ -15,74 +21,109 @@ interface ThemeSchemaInterface extends JsonSchemaInterface
     public function getSchemaSource() : string;
 
     /**
-     * Get the name of the theme
+     * Get theme name
      *
-     * @return string
+     * @return ?string
      */
     public function getName(): string;
 
     /**
-     * Get the version of the theme
+     * Get theme version
      *
-     * @return ?string
+     * @return string
      */
-    public function getVersion(): ?string;
+    public function getVersion(): string;
 
     /**
-     * Get the description of the theme
+     * Get theme url
      *
-     * @return ?string
+     * @return string
      */
-    public function getDescription(): ?string;
+    public function getUrl(): string;
 
     /**
-     * Get the url of the theme
+     * Get author
      *
-     * @return ?string
+     * @return string
      */
-    public function getUrl(): ?string;
+    public function getAuthor(): string;
 
     /**
-     * Get the author of the theme
+     * Get author url
      *
-     * @return ?string
+     * @return string
      */
-    public function getAuthor(): ?string;
+    public function getAuthorUrl(): string;
 
     /**
-     * Get the author url of the theme
+     * Get license
      *
-     * @return ?string
+     * @return string
      */
-    public function getAuthorUrl(): ?string;
+    public function getLicense(): string;
 
     /**
-     * Get the license of the theme
+     * Get license url
      *
-     * @return ?string
+     * @return string
      */
-    public function getLicense(): ?string;
+    public function getLicenseUrl(): string;
 
     /**
-     * Get the license url of the theme
+     * Get date
      *
-     * @return ?string
+     * @return ?string return null if not set
      */
-    public function getLicenseUrl(): ?string;
+    public function getDate(): ?string;
 
     /**
-     * Get the thumbnail of the theme
+     * Get updated
      *
-     * @return ?string
+     * @return ?string return null if not set
      */
-    public function getThumbnail(): ?string;
+    public function getUpdated(): ?string;
 
     /**
-     * Get the language directory of the theme
+     * Get description
+     *
+     * @return string
+     */
+    public function getDescription(): string;
+
+    /**
+     * Get language directory
      *
      * @return string
      */
     public function getLanguageDirectory(): string;
+
+    /**
+     * Get translate
+     *
+     * @return bool
+     */
+    public function isTranslate(): bool;
+
+    /**
+     * Get changelog
+     *
+     * @return array
+     */
+    public function getChangelog(): array;
+
+    /**
+     * Get metadata
+     *
+     * @return object|stdClass
+     */
+    public function getMetadata() : array;
+
+    /**
+     * Get settings
+     *
+     * @return array|object
+     */
+    public function getSettings();
 
     /**
      * Get the language file of the theme

@@ -3,8 +3,24 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Interfaces;
 
-interface HooksServiceInterface extends RepeatableServiceInterface
+use Pentagonal\Neon\WHMCS\Addon\Core;
+
+interface HooksInterface
 {
+    /**
+     * HooksInterface constructor.
+     *
+     * @param Core $core
+     */
+    public function __construct(Core $core);
+
+    /**
+     * Get the core
+     *
+     * @return Core The core
+     */
+    public function getCore(): Core;
+
     /**
      * @param HookInterface|class-string<HookInterface> $hook
      * @return bool true if succeed queued otherwise false
@@ -41,5 +57,5 @@ interface HooksServiceInterface extends RepeatableServiceInterface
     /**
      * Dispatch the hooks
      */
-    public function dispatch($arg = null, ...$args);
+    public function run();
 }

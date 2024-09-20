@@ -1,19 +1,24 @@
 <?php
 declare(strict_types=1);
 
-namespace Pentagonal\Neon\WHMCS\Addon\Schema;
+namespace Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel;
 
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\ThemeSchemaInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaThemeConstructorTrait;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Themes;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaThemeTrait;
 use function dirname;
 use function file_exists;
 use function is_bool;
 use function realpath;
+use function var_dump;
 use const DIRECTORY_SEPARATOR;
 
-class StructureSchema implements ThemeSchemaInterface
+class ThemeSchema implements ThemeSchemaInterface
 {
-    use SchemaThemeConstructorTrait;
+    use SchemaThemeTrait {
+        SchemaThemeTrait::getSchema as private getSchemaTrait;
+    }
 
     /**
      * @var string $schemaFile the schema file
@@ -28,9 +33,29 @@ class StructureSchema implements ThemeSchemaInterface
     /**
      * @inheritDoc
      */
+    public function getSchemaClassName(): string
+    {
+        return Themes::class;
+    }
+
+    /**
+     * @return ?Themes
+     */
+    public function getSchema(): ?Themes
+    {
+        $schema = $this->getSchemaTrait();
+        if ($schema instanceof Themes) {
+            return $schema;
+        }
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getSchemaSource(): string
     {
-        return $this->get('$schema')??self::REF;
+        return $this->get('$schema')??Plugin::ID;
     }
 
     /**
@@ -44,65 +69,57 @@ class StructureSchema implements ThemeSchemaInterface
     /**
      * @inheritdoc
      */
-    public function getVersion(): ?string
+    public function getVersion(): string
     {
-        return $this->get('version');
+        return $this->get('version')??'';
     }
 
     /**
      * @inheritdoc
      */
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
-        return $this->get('description');
+        return $this->get('description')??"";
     }
 
     /**
      * @inheritdoc
      */
-    public function getUrl(): ?string
+    public function getUrl(): string
     {
-        return $this->get('url');
+        return $this->get('url')??'';
     }
 
     /**
      * @inheritdoc
      */
-    public function getAuthor(): ?string
+    public function getAuthor(): string
     {
-        return $this->get('author');
+        return $this->get('author')??'';
     }
 
     /**
      * @inheritdoc
      */
-    public function getAuthorUrl(): ?string
+    public function getAuthorUrl(): string
     {
-        return $this->get('author_url');
+        return $this->get('author_url')??'';
     }
 
     /**
      * @inheritdoc
      */
-    public function getLicense(): ?string
+    public function getLicense(): string
     {
-        return $this->get('license');
+        return $this->get('license')??'';
     }
 
     /**
      * @inheritdoc
      */
-    public function getLicenseUrl(): ?string
+    public function getLicenseUrl(): string
     {
-        return $this->get('license_url');
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getThumbnail(): ?string
-    {
-        return $this->get('thumbnail');
+        return $this->get('license_url')??"";
     }
 
     /**
@@ -111,6 +128,46 @@ class StructureSchema implements ThemeSchemaInterface
     public function getLanguageDirectory(): string
     {
         return $this->get('language_directory')??'languages';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getDate(): ?string
+    {
+        return $this->get('date')??'';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getUpdated(): ?string
+    {
+        return $this->get('updated')??'';
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function isTranslate(): bool
+    {
+        return (bool) $this->get('translate');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getChangelog(): array
+    {
+        return $this->get('changelog')??[];
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function getMetadata(): array
+    {
+        return $this->get('metadata')??[];
     }
 
     /**
@@ -179,9 +236,9 @@ class StructureSchema implements ThemeSchemaInterface
      */
     public function getRefSchemaFile(): string
     {
-        $file = dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . 'schema' . DIRECTORY_SEPARATOR . 'options+themes.json';
+        $file = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'schema' . DIRECTORY_SEPARATOR . 'options+themes.json';
         return $this->refSchemaFile ??= file_exists($file)
             ? (realpath($file)?:$file)
-            :  self::REF;
+            :  Themes::ID;
     }
 }

@@ -63,7 +63,7 @@
     }
     pre, code, kbd, samp {
         font-family: var(--pentagonal-base-code-font-family, #{$base-mono-family});
-        font-size: var(--pentagonal-base-code-font-size, 87.5%);
+        font-size: var(--pentagonal-base-code-font-size, 1rem);
     }
     sup {
         position: relative;

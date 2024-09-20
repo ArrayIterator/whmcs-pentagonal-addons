@@ -5,6 +5,7 @@ namespace Pentagonal\Neon\WHMCS\Addon\Helpers\LogWriter;
 
 use Monolog\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Options;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\LogWriterInterface;
 use RuntimeException;
 use Throwable;
@@ -93,77 +94,82 @@ class DatabaseWriter implements LogWriterInterface
             return;
         }
         $this->initialized = true;
-        // do something
-        if (!Capsule::schema()->hasTable(self::TABLE_NAME)) {
-            Capsule::schema()->create(self::TABLE_NAME, function ($table) {
-                /**
-                 * @var \Illuminate\Database\Schema\Blueprint $table
-                 * @noinspection PhpFullyQualifiedNameUsageInspection
-                 */
-                $table->bigIncrements('id')->unsigned();
-                $table->integer('level');
-                $table->text('message');
-                $table->text('context')->nullable();
-                $table->text('extra')->nullable();
-                $table->integer('timestamp', false, true);
-            });
-        }
-        if (!Options::has(self::ENABLE_OPTION_NAME)) {
-            Options::set(self::ENABLE_OPTION_NAME, 'yes');
-        } else {
-            $logOption = Options::get(self::ENABLE_OPTION_NAME);
-            $logOption = is_string($logOption) ? strtolower(trim($logOption)) : $logOption;
-            $this->enabled = in_array($logOption, ['yes', '1', 'true', 'on', true, 1], true);
-        }
-
-        // SELECT * FROM information_schema.tables WHERE table_schema
-        //  = 'tablename' and TABLE_NAME = 'pentagonal_record_logs';
+        $performance = Performance::profile('init', self::class);
         try {
-            $count = Capsule::table('information_schema.tables')
-                ->select('TABLE_ROWS')
-                ->where([
-                    ['TABLE_SCHEMA', '=', Capsule::connection()->getDatabaseName()],
-                    ['TABLE_NAME', '=', self::TABLE_NAME],
-                ])->value('TABLE_ROWS');
-            if (is_numeric($count)) {
-                $this->initialLogCount = $count;
+            // do something
+            if (!Capsule::schema()->hasTable(self::TABLE_NAME)) {
+                Capsule::schema()->create(self::TABLE_NAME, function ($table) {
+                    /**
+                     * @var \Illuminate\Database\Schema\Blueprint $table
+                     * @noinspection PhpFullyQualifiedNameUsageInspection
+                     */
+                    $table->bigIncrements('id')->unsigned();
+                    $table->integer('level');
+                    $table->text('message');
+                    $table->text('context')->nullable();
+                    $table->text('extra')->nullable();
+                    $table->integer('timestamp', false, true);
+                });
             }
-        } catch (Throwable $e) {
-        }
-        if (!Options::has(self::MAX_COUNT_AUTO_CLEAN_OPTION_NAME)) {
-            Options::set(self::MAX_COUNT_AUTO_CLEAN_OPTION_NAME, self::CLEAN_LOG_COUNT);
-            $maxLogCount = self::CLEAN_LOG_COUNT;
-        } else {
-            $maxLogCount = Options::get(self::MAX_COUNT_AUTO_CLEAN_OPTION_NAME);
-            $maxLogCount = is_string($maxLogCount) ? trim($maxLogCount) : $maxLogCount;
-        }
-        if (is_numeric($maxLogCount) && $maxLogCount > 0) {
-            $this->limitLogRecords = (int) $maxLogCount;
-        }
-        if (!Options::has(self::DISABLE_AUTO_CLEAN_OPTION_NAME)) {
-            Options::set(self::DISABLE_AUTO_CLEAN_OPTION_NAME, 'no');
-            return;
-        } else {
-            $disableAutoClean = Options::get(self::DISABLE_AUTO_CLEAN_OPTION_NAME);
-            $disableAutoClean = is_string($disableAutoClean) ? strtolower(trim($disableAutoClean)) : $disableAutoClean;
-            if (in_array($disableAutoClean, ['yes', '1', 'true', 'on', true, 1], true)) {
-                return;
+            if (!Options::has(self::ENABLE_OPTION_NAME)) {
+                Options::set(self::ENABLE_OPTION_NAME, 'yes');
+            } else {
+                $logOption = Options::get(self::ENABLE_OPTION_NAME);
+                $logOption = is_string($logOption) ? strtolower(trim($logOption)) : $logOption;
+                $this->enabled = in_array($logOption, ['yes', '1', 'true', 'on', true, 1], true);
             }
-        }
 
-        $initialLogCount = $this->getInitialLogCount();
-        $limitLogCount = $this->getLimitLogRecords();
-        if ($initialLogCount >= $limitLogCount) {
+            // SELECT * FROM information_schema.tables WHERE table_schema
+            //  = 'tablename' and TABLE_NAME = 'pentagonal_record_logs';
             try {
-                // delete and truncate only 100K
-                // delete oldest first by timestamp
-                Capsule::table(self::TABLE_NAME)
-                    ->orderBy('timestamp', 'asc')
-                    ->limit($initialLogCount - $limitLogCount)
-                    ->delete();
+                $count = Capsule::table('information_schema.tables')
+                    ->select('TABLE_ROWS')
+                    ->where([
+                        ['TABLE_SCHEMA', '=', Capsule::connection()->getDatabaseName()],
+                        ['TABLE_NAME', '=', self::TABLE_NAME],
+                    ])->value('TABLE_ROWS');
+                if (is_numeric($count)) {
+                    $this->initialLogCount = $count;
+                }
             } catch (Throwable $e) {
-                // next
             }
+            if (!Options::has(self::MAX_COUNT_AUTO_CLEAN_OPTION_NAME)) {
+                Options::set(self::MAX_COUNT_AUTO_CLEAN_OPTION_NAME, self::CLEAN_LOG_COUNT);
+                $maxLogCount = self::CLEAN_LOG_COUNT;
+            } else {
+                $maxLogCount = Options::get(self::MAX_COUNT_AUTO_CLEAN_OPTION_NAME);
+                $maxLogCount = is_string($maxLogCount) ? trim($maxLogCount) : $maxLogCount;
+            }
+            if (is_numeric($maxLogCount) && $maxLogCount > 0) {
+                $this->limitLogRecords = (int)$maxLogCount;
+            }
+            if (!Options::has(self::DISABLE_AUTO_CLEAN_OPTION_NAME)) {
+                Options::set(self::DISABLE_AUTO_CLEAN_OPTION_NAME, 'no');
+                return;
+            } else {
+                $disableAutoClean = Options::get(self::DISABLE_AUTO_CLEAN_OPTION_NAME);
+                $disableAutoClean = is_string($disableAutoClean) ? strtolower(trim($disableAutoClean)) : $disableAutoClean;
+                if (in_array($disableAutoClean, ['yes', '1', 'true', 'on', true, 1], true)) {
+                    return;
+                }
+            }
+
+            $initialLogCount = $this->getInitialLogCount();
+            $limitLogCount = $this->getLimitLogRecords();
+            if ($initialLogCount >= $limitLogCount) {
+                try {
+                    // delete and truncate only 100K
+                    // delete oldest first by timestamp
+                    Capsule::table(self::TABLE_NAME)
+                        ->orderBy('timestamp', 'asc')
+                        ->limit($initialLogCount - $limitLogCount)
+                        ->delete();
+                } catch (Throwable $e) {
+                    // next
+                }
+            }
+        } finally {
+            $performance->stop();
         }
     }
 
@@ -198,65 +204,72 @@ class DatabaseWriter implements LogWriterInterface
      *
      * @return void
      */
-    private function doingWrite(): void
+    private function saveDatabase(): void
     {
         $this->init();
         if (!$this->isEnabled()) {
             $this->queue = [];
             return;
         }
-
         if (empty($this->queue)) {
             return;
         }
-        $insert = [];
-        while ($record = array_shift($this->queue)) {
-            try {
-                set_error_handler(static function ($errNo, $errStr) {
-                    throw new RuntimeException($errStr, $errNo);
-                });
-                $record['context'] = $record['context'] !== null
-                    ? serialize($record['context'])
+        $performance = Performance::profile('save', self::class)
+            ->setData([
+                'queue' => count($this->queue),
+            ]);
+        try {
+            $insert = [];
+            while ($record = array_shift($this->queue)) {
+                try {
+                    set_error_handler(static function ($errNo, $errStr) {
+                        throw new RuntimeException($errStr, $errNo);
+                    });
+                    $record['context'] = $record['context'] !== null
+                        ? serialize($record['context'])
+                        : null;
+                    $record['extra'] = $record['extra'] !== null
+                        ? serialize($record['extra'])
+                        : null;
+                } catch (Throwable $e) {
+                    $record['context'] = null;
+                    $record['extra'] = null;
+                }
+                $record['context'] = $record['context'] === null || is_string($record['context'])
+                    ? $record['context']
                     : null;
-                $record['extra'] = $record['extra'] !== null
-                    ? serialize($record['extra'])
+                $record['extra'] = $record['extra'] === null || is_string($record['extra'])
+                    ? $record['extra']
                     : null;
-            } catch (Throwable $e) {
-                $record['context'] = null;
-                $record['extra'] = null;
+                $insert[] = [
+                    'level' => $record['level'],
+                    'message' => $record['message'],
+                    'context' => $record['context'],
+                    'extra' => $record['extra'],
+                    'timestamp' => time(),
+                ];
+                $record = null;
+                unset($record); // free memory
+                if (count($insert) >= self::MAX_BATCH_INSERT) {
+                    try {
+                        Capsule::table(self::TABLE_NAME)->insert($insert);
+                    } catch (Throwable $e) {
+                        // next
+                    }
+                    $insert = [];
+                }
             }
-            $record['context']  = $record['context'] === null || is_string($record['context'])
-                ? $record['context']
-                : null;
-            $record['extra']    = $record['extra'] === null || is_string($record['extra'])
-                ? $record['extra']
-                : null;
-            $insert[] = [
-                'level' => $record['level'],
-                'message' => $record['message'],
-                'context' => $record['context'],
-                'extra' => $record['extra'],
-                'timestamp' => time(),
-            ];
-            $record = null;
-            unset($record); // free memory
-            if (count($insert) >= self::MAX_BATCH_INSERT) {
+            if (!empty($insert)) {
                 try {
                     Capsule::table(self::TABLE_NAME)->insert($insert);
                 } catch (Throwable $e) {
                     // next
                 }
                 $insert = [];
+                unset($insert);
             }
-        }
-        if (!empty($insert)) {
-            try {
-                Capsule::table(self::TABLE_NAME)->insert($insert);
-            } catch (Throwable $e) {
-                // next
-            }
-            $insert = [];
-            unset($insert);
+        } finally {
+            $performance->stop();
         }
     }
 
@@ -296,7 +309,7 @@ class DatabaseWriter implements LogWriterInterface
         ];
 
         if (count($this->queue) >= self::MAX_QUEUE) {
-            $this->doingWrite();
+            $this->saveDatabase();
         }
     }
 
@@ -305,6 +318,6 @@ class DatabaseWriter implements LogWriterInterface
      */
     public function __destruct()
     {
-        $this->doingWrite();
+        $this->saveDatabase();
     }
 }

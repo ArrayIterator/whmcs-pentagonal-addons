@@ -5,13 +5,16 @@ namespace Pentagonal\Neon\WHMCS\Addon\Schema;
 
 use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\JsonSchemaInterface;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\SchemasInterface;
+use Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel\PluginSchema;
+use Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel\ThemeSchema;
 use function get_class;
 use function is_string;
 
 /**
  * @template T of JsonSchemaInterface
  */
-class Schemas
+class Schemas implements SchemasInterface
 {
     /**
      * @var Core $core the core
@@ -27,7 +30,8 @@ class Schemas
      * @var array<class-string<T>, true> $keep the keep
      */
     private array $keep = [
-        StructureSchema::class => true
+        ThemeSchema::class => true,
+        PluginSchema::class => true,
     ];
 
     /**
@@ -43,13 +47,16 @@ class Schemas
             $this->keep = [];
             return;
         }
+        /**
+         * @var class-string<T> $className
+         */
         foreach ($this->keep as $className => $value) {
-            $this->schemas[$className] = new $className($this->getCore()->getTheme());
+            $this->schemas[$className] = new $className($this);
         }
     }
 
     /**
-     * @return Core
+     * @inheritDoc
      */
     public function getCore(): Core
     {
@@ -57,10 +64,7 @@ class Schemas
     }
 
     /**
-     * Check if schema is removable
-     *
-     * @param $schemaClassName
-     * @return bool
+     * @inheritDoc
      */
     public function isRemovable($schemaClassName): bool
     {
@@ -73,10 +77,7 @@ class Schemas
     }
 
     /**
-     * Add schema
-     *
-     * @param T $schema
-     * @return void
+     * @inheritDoc
      */
     public function add(JsonSchemaInterface $schema) : void
     {
@@ -88,10 +89,7 @@ class Schemas
     }
 
     /**
-     * Remove schema
-     *
-     * @param string $schemaClassName
-     * @return void
+     * @inheritDoc
      */
     public function remove(string $schemaClassName) : void
     {
@@ -102,10 +100,7 @@ class Schemas
     }
 
     /**
-     * Get schema
-     *
-     * @param class-string<T> $schemaClassName
-     * @return ?T
+     * @inheritDoc
      */
     public function get(string $schemaClassName) : ?JsonSchemaInterface
     {

@@ -3,35 +3,41 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Traits;
 
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\SchemasInterface;
 use Swaggest\JsonSchema\InvalidValue;
 use Swaggest\JsonSchema\Schema;
 use Swaggest\JsonSchema\SchemaContract;
 use Swaggest\JsonSchema\Structure\ObjectItemContract;
 use Throwable;
 use function file_get_contents;
-use function is_array;
+use function file_put_contents;
+use function filemtime;
+use function is_dir;
+use function is_file;
 use function is_object;
+use function is_subclass_of;
+use function is_writable;
 use function json_decode;
+use function mkdir;
+use function pathinfo;
+use function preg_match;
+use function restore_error_handler;
 use function set_error_handler;
+use function sha1;
 use function sprintf;
+use function sys_get_temp_dir;
+use function time;
+use function unlink;
 use const E_USER_WARNING;
+use const PATHINFO_EXTENSION;
 
 trait SchemaTrait
 {
     /**
-     * @var ?ObjectItemContract $schema the schema
+     * @var ?ObjectItemContract $refSchema the reference schema
      */
-    protected ?ObjectItemContract $schema = null;
-
-    /**
-     * @var ?SchemaContract $refSchema the reference schema
-     */
-    protected ?SchemaContract $refSchema = null;
-
-    /**
-     * @var bool $valid is schema valid
-     */
-    protected ?bool $valid = null;
+    protected ?ObjectItemContract $refSchema = null;
 
     /**
      * @var bool $refSchemaInit is reference schema initialized
@@ -39,14 +45,32 @@ trait SchemaTrait
     private bool $refSchemaInit = false;
 
     /**
-     * @var bool $schemaInit is schema initialized
-     */
-    private bool $schemaInit = false;
-
-    /**
      * @var ?Throwable $error the error
      */
-    private ?Throwable $error = null;
+    protected ?Throwable $error = null;
+
+    /**
+     * @var SchemasInterface $schemas the core
+     */
+    protected SchemasInterface $schemas;
+
+    /**
+     * Theme constructor.
+     *
+     * @param SchemasInterface $schemas
+     */
+    public function __construct(SchemasInterface $schemas)
+    {
+        $this->schemas = $schemas;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getSchemas() : SchemasInterface
+    {
+        return $this->schemas;
+    }
 
     /**
      * @inheritdoc
@@ -62,24 +86,30 @@ trait SchemaTrait
     abstract public function getRefSchemaFile(): string;
 
     /**
-     * @inheritdoc
-     */
-    abstract public function getSchemaFile(): string;
-
-    /**
-     * @InheritDoc
-     */
-    public function get(string $name)
-    {
-        return $this->getSchemaArray()[$name]??null;
-    }
-
-    /**
+     * Create schema from file
+     *
+     * @param string $file
+     * @param string $className
+     * @return SchemaContract|null
+     * @throws InvalidValue
      * @throws Throwable
      */
-    private function createSchemaFromFile(string $file): ?SchemaContract
+    public function createSchemaFromFile(string $file, string $className = Schema::class): ?SchemaContract
     {
-        return Schema::import($this->readJson($file));
+        $performance = Performance::profile('create_schema_from_file', static::class)
+            ->setData([
+                'file' => $file,
+                'class' => $className,
+            ]);
+        try {
+            /** @noinspection PhpRedundantOptionalArgumentInspection */
+            if ($className === Schema::class || is_subclass_of($className, Schema::class, true)) {
+                return $className::import($this->readJson($file));
+            }
+            throw new InvalidValue(sprintf('Invalid Schema Class: %s', $className), E_USER_WARNING);
+        } finally {
+            $performance->stop();
+        }
     }
 
     /**
@@ -87,42 +117,75 @@ trait SchemaTrait
      * @return ?array
      * @throws InvalidValue
      */
-    private function readJson(string $file) : ?object
+    protected function readJson(string $file) : ?object
     {
-        set_error_handler(
-            static function ($errno, $errStr) {
-                throw new InvalidValue($errStr, $errno);
-            },
-            E_USER_WARNING
-        );
+        $performance = Performance::profile('read_json', static::class)
+            ->setData([
+                'file' => $file,
+            ]);
+        $json = null;
         try {
-            $content = file_get_contents($file);
-            if ($content === false) {
-                throw new InvalidValue(sprintf('Failed to read file: %s', $file), E_USER_WARNING);
+            set_error_handler(
+                static function ($errno, $errStr) {
+                    throw new InvalidValue($errStr, $errno);
+                },
+                E_USER_WARNING
+            );
+            $originalFile = $file;
+            $isRemote = preg_match('/^https?:\/\//', $file);
+            // cache directory
+            $tempDir = sys_get_temp_dir() . '/schemas';
+            $remoteFile = $tempDir . '/' . sha1($file) . '.' . pathinfo($file, PATHINFO_EXTENSION);
+            $isCached = false;
+            if ($isRemote) {
+                if (!is_dir($tempDir)) {
+                    set_error_handler(function () {
+                    });
+                    mkdir($tempDir, 0777, true);
+                    restore_error_handler();
+                }
+                if (is_file($remoteFile) && filemtime($remoteFile) > (time() - 3600)) {
+                    $isCached = true;
+                    $file = $remoteFile;
+                }
+            }
+            $readPerformance = Performance::profile('read_json_file', static::class)
+                ->setData([
+                    'file' => $file,
+                    'original_file' => $originalFile,
+                    'is_cached' => $isCached,
+                    'is_remote' => $isRemote,
+                ]);
+            try {
+                $content = file_get_contents($file);
+                if (!$isCached && $isRemote && is_dir($tempDir) && is_writable($tempDir)) {
+                    if (is_file($remoteFile)) {
+                        unlink($remoteFile);
+                    }
+                    file_put_contents($remoteFile, $content === false ? 'false' : $content);
+                }
+                if ($content === false || $content === 'false') {
+                    throw new InvalidValue(sprintf('Failed to read file: %s', $originalFile), E_USER_WARNING);
+                }
+            } finally {
+                restore_error_handler();
+                $readPerformance->stop();
+            }
+
+            $json = json_decode($content, false);
+            if (!is_object($json)) {
+                throw new InvalidValue('Invalid JSON Schema', E_USER_WARNING);
             }
         } finally {
-            restore_error_handler();
-        }
-
-        $json = json_decode($content, false);
-        if (!is_object($json)) {
-            throw new InvalidValue('Invalid JSON Schema', E_USER_WARNING);
+            $performance->stop();
         }
         return $json;
     }
 
     /**
-     * @return bool is valid
-     */
-    public function isValid(): bool
-    {
-        return $this->valid ??= $this->getSchema() instanceof ObjectItemContract;
-    }
-
-    /**
      * @inheritDoc
      */
-    public function getRefSchema(): ?SchemaContract
+    public function getRefSchema(): ?ObjectItemContract
     {
         if ($this->refSchemaInit) {
             return $this->refSchema;
@@ -130,69 +193,10 @@ trait SchemaTrait
         $this->refSchemaInit = true;
         $this->refSchema = null;
         try {
-            $this->refSchema = $this->createSchemaFromFile($this->getRefSchemaFile());
+            $this->refSchema =  $this->createSchemaFromFile($this->getRefSchemaFile());
         } catch (Throwable $e) {
             $this->error = $e;
         }
         return $this->refSchema??null;
     }
-
-    /**
-     * @inheritDoc
-     */
-    public function getSchema() : ?ObjectItemContract
-    {
-        if ($this->schemaInit) {
-            return $this->schema instanceof ObjectItemContract ? $this->schema : null;
-        }
-        $this->schemaInit = true;
-        $this->schema = null;
-        $this->valid = false;
-        $refSchema = $this->getRefSchema();
-        if (!$refSchema) {
-            return null;
-        }
-        try {
-            $schemaObject = $this->readJson($this->getSchemaFile());
-            $this->schema = $refSchema->in($schemaObject);
-            $this->valid = $this->schema instanceof ObjectItemContract;
-            if (!$this->valid) {
-                $this->error = new InvalidValue('Invalid Schema');
-                $this->schema = null;
-            }
-        } catch (Throwable $e) {
-            $this->error = $e;
-        }
-        return $this->schema;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getSchemaArray() : array
-    {
-        $schema = $this->getSchema();
-        $constNested = static function ($schema) use (&$constNested) {
-            $schema = $schema instanceof ObjectItemContract ? $schema->toArray() : $schema;
-            if (!is_array($schema)) {
-                return $schema;
-            }
-            $arrays = [];
-            foreach ($schema as $name => $property) {
-                if ($property instanceof ObjectItemContract) {
-                    $arrays[$name] = $constNested($property);
-                    continue;
-                }
-                $arrays[$name] = $property;
-            }
-            return $arrays;
-        };
-        return $constNested($schema)??[];
-    }
-//    public function __debugInfo()
-//    {
-//        $object = get_object_vars($this);
-//        $object['schema'] = sprintf('%s(%s)', get_class($object['schema']), spl_object_hash($object['schema']));
-//        return $object;
-//    }
 }

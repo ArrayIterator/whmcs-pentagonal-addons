@@ -14,6 +14,7 @@ use function iterator_to_array;
 use function ob_end_clean;
 use function ob_get_clean;
 use function ob_get_length;
+use function ob_get_level;
 use function strtolower;
 
 class AdminDispatcherHandler
@@ -37,6 +38,11 @@ class AdminDispatcherHandler
      * @var bool $processed if processed
      */
     private bool $processed = false;
+
+    /**
+     * @var ?DispatcherHandlerInterface $processedHandler the processed handler
+     */
+    private ?DispatcherHandlerInterface $processedHandler = null;
 
     /**
      * @param AdminDispatcher $dispatcher
@@ -117,6 +123,7 @@ class AdminDispatcherHandler
 
     /**
      * @return void
+     * @noinspection PhpUnused
      */
     public function clearMessage()
     {
@@ -135,6 +142,27 @@ class AdminDispatcherHandler
     }
 
     /**
+     * Check if the handler is processed
+     *
+     * @return bool
+     */
+    public function isProcessed() : bool
+    {
+        return $this->processed;
+    }
+
+    /**
+     * Get processed handler
+     *
+     * @return ?DispatcherHandlerInterface
+     * @noinspection PhpUnused
+     */
+    public function getProcessedHandler(): ?DispatcherHandlerInterface
+    {
+        return $this->processedHandler;
+    }
+
+    /**
      * Process the handler
      *
      * @param $vars
@@ -144,7 +172,7 @@ class AdminDispatcherHandler
      */
     public function process($vars, &$handled = null, &$error = null)
     {
-        if ($this->processed) {
+        if ($this->isProcessed()) {
             $error = new RuntimeException(
                 'Already processed'
             );
@@ -164,7 +192,7 @@ class AdminDispatcherHandler
         $handled = false;
         foreach ($this->getHandlers() as $handler) {
             $isApiHandler = $handler instanceof DispatcherHandlerApiInterface;
-            $handlerPage = $handler->getPage();
+            $handlerPage = $handler->getRoutePath();
             $isCaseSensitive = $handler->isCaseSensitivePage();
             $canBeProcess = ($isApi ? $isApiHandler : !$isApiHandler);
             if (!$canBeProcess) {
@@ -179,8 +207,10 @@ class AdminDispatcherHandler
                     continue;
                 }
             }
+            // stop here
             if ($handler->isProcessable($vars)) {
                 $handled = true;
+                $level = ob_get_level();
                 ob_start();
                 try {
                     $result = $handler->process($vars, $this);
@@ -188,15 +218,21 @@ class AdminDispatcherHandler
                     $error = $e;
                     return false;
                 } finally {
-                    if ($result instanceof DispatcherResponseInterface
-                        || is_string($result)
+                    /** @noinspection PhpConditionAlreadyCheckedInspection */
+                    if (is_string($result)
+                        || $result instanceof DispatcherResponseInterface
                         || ob_get_length() === 0
                     ) {
-                        ob_end_clean();
+                        if ($level < ob_get_level()) {
+                            ob_end_clean();
+                        }
                     } else {
-                        $result = ob_get_clean();
+                        if ($level < ob_get_level()) {
+                            $result = ob_get_clean();
+                        }
                     }
                 }
+                $this->processedHandler = $handler;
                 return $result;
             }
         }

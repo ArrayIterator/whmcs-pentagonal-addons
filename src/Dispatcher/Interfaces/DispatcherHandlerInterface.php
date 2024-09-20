@@ -29,7 +29,7 @@ interface DispatcherHandlerInterface
      *
      * @return string
      */
-    public function getPage() : string;
+    public function getRoutePath() : string;
 
     /**
      * Make rule if it case-sensitive

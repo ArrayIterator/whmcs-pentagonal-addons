@@ -1,17 +1,19 @@
 <?php
 declare(strict_types=1);
 
-namespace Pentagonal\Neon\WHMCS\Addon\Libraries;
+namespace Pentagonal\Neon\WHMCS\Addon;
 
-use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServiceInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ServicesInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\StructureSchema;
+use Pentagonal\Neon\WHMCS\Addon\Libraries\Collector;
+use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
+use Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel\ThemeSchema;
 use Pentagonal\Neon\WHMCS\Addon\Services\AdminService;
-use Pentagonal\Neon\WHMCS\Addon\Services\Hooks;
 use Pentagonal\Neon\WHMCS\Addon\Services\PluginService;
 use Pentagonal\Neon\WHMCS\Addon\Services\ThemeService;
 use ReflectionClass;
@@ -67,8 +69,7 @@ class Services implements ServicesInterface
     public const PROTECTED_SERVICES = [
         PluginService::class,
         ThemeService::class,
-        AdminService::class,
-        Hooks::class
+        AdminService::class
     ];
 
     /**
@@ -285,28 +286,63 @@ class Services implements ServicesInterface
         if ($this->initialized) {
             return;
         }
+        $stopCode = Random::bytes();
+        $performance = Performance::profile('services_init', Services::class)
+            ->setStopCode($stopCode);
         $this->initialized = true;
         $em = $this->getCore()->getEventManager();
         try {
-            $em->apply(self::EVENT_BEFORE_SERVICES_INIT, $this);
-            $themeSchema = $this->getCore()->getSchemas()->get(StructureSchema::class);
-            if (!$themeSchema instanceof StructureSchema || !$themeSchema->isValid()) {
+            try {
+                $em->apply(self::EVENT_BEFORE_SERVICES_INIT, $this);
+            } catch (Throwable $e) {
+                Logger::error($e, [
+                    'type' => 'service',
+                    'method' => 'init',
+                    'event' => self::EVENT_BEFORE_SERVICES_INIT
+                ]);
+            }
+            $themeSchema = $this->getCore()->getSchemas()->get(ThemeSchema::class);
+            if (!$themeSchema instanceof ThemeSchema || !$themeSchema->isValid()) {
                 return;
             }
             $serviceFile = $themeSchema->getServiceFile();
             if (!$serviceFile || !file_exists($serviceFile)) {
                 return;
             }
-            // no-catch
-            StaticInclude::include($serviceFile, ['services' => $this]);
+            $servicePerformance = Performance::profile('services_init_include', Services::class)
+                ->setStopCode($stopCode);
+            try {
+                // no-catch
+                StaticInclude::include($serviceFile, ['services' => $this]);
+            } finally {
+                $servicePerformance->stop([], $stopCode);
+            }
         } catch (Throwable $e) {
             Logger::error($e, [
                 'type' => 'service',
                 'method' => 'init'
             ]);
-            $em->apply(self::EVENT_SERVICE_ERROR, $this, $e);
+            try {
+                $em->apply(self::EVENT_SERVICE_ERROR, $this, $e);
+            } catch (Throwable $e) {
+                Logger::error($e, [
+                    'type' => 'service',
+                    'method' => 'init',
+                    'event' => self::EVENT_SERVICE_ERROR
+                ]);
+            }
         } finally {
-            $em->apply(self::EVENT_AFTER_SERVICES_INIT, $this);
+            try {
+                $em->apply(self::EVENT_AFTER_SERVICES_INIT, $this);
+            } catch (Throwable $e) {
+                Logger::error($e, [
+                    'type' => 'service',
+                    'method' => 'init',
+                    'event' => self::EVENT_AFTER_SERVICES_INIT
+                ]);
+            } finally {
+                $performance->stop([], $stopCode);
+            }
         }
     }
 

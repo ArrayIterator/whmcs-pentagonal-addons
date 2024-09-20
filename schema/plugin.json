@@ -3,57 +3,61 @@
     "$id": "https://hub.pentagonal.org/schemas/plugin.json",
     "type": "object",
     "title": "Schema for plugin",
-    "version": "1.0.0",
     "description": "The schema for plugin",
+    "version": "1.0.0",
     "required": [
         "name",
-        "plugin_file"
+        "namespace"
     ],
     "properties": {
         "$schema": {
-            "description": "The schema uri of the schema",
+            "description": "The schema uri of the plugin",
             "type": "string"
         },
         "$id": {
-            "description": "The id of the schema",
+            "description": "The id of the plugin",
             "type": "string",
             "format": "uri"
         },
         "name": {
-            "description": "The name of the schema",
+            "description": "The name of the plugin",
             "type": "string"
         },
         "version": {
-            "description": "The version of the schema",
+            "description": "The version of the plugin",
             "type": "string"
         },
         "url": {
-            "description": "The url of the schema",
+            "description": "The url of the plugin",
             "type": "string",
             "format": "uri"
         },
         "author": {
-            "description": "The author of the schema",
+            "description": "The author of the plugin",
             "type": "string"
         },
         "author_url": {
-            "description": "The author url of the schema",
+            "description": "The author url of the plugin",
             "type": "string",
             "format": "uri"
         },
         "license": {
-            "description": "The license of the schema",
+            "description": "The license of the plugin",
             "type": "string"
         },
         "license_url": {
-            "description": "The license url of the schema",
+            "description": "The license url of the plugin",
             "type": "string",
             "format": "uri"
         },
-        "plugin_file": {
-            "description": "The plugin file of the schema",
-            "default": "plugin.php",
-            "pattern": "^[a-z0-9_\\-.]+\\.php$",
+        "enable_admin_page": {
+            "description": "Enable Page on addon plugin",
+            "default": false,
+            "type": "boolean"
+        },
+        "namespace": {
+            "description": "The namespace of the plugin class",
+            "pattern": "^[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*$",
             "type": "string"
         }
     }

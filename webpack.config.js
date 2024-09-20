@@ -6,11 +6,11 @@ const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const env = (process.env.NODE_ENV || 'production') === 'production' ? 'production' : 'development';
 const isServe = process.env.WEBPACK_SERVE === 'true';
 const isProduction = env === 'production';
-const libBaseName = 'pentagonal-whmcs';
+const libBaseName = 'whmcs-pentagonal';
 const resolvePath = (base) => {
     base = base.replace(/\\/g, '/').replace(/^\/|\/$/g, '');
     return (pathData) => {
-        let dir = base + '/assets';
+        let dir = base + '/';
         let fileName = pathData.filename.replace(/\\/g, '/');
         if (fileName.startsWith('node_modules')) {
             dir += 'vendor/';
@@ -21,7 +21,7 @@ const resolvePath = (base) => {
         dir += 'core/';
         let relativePath = pathData.module.resourceResolveData.relativePath;
         relativePath = relativePath.replace(/\\/g, '/').replace(/^(\.)?\//g, '');
-        if (relativePath.startsWith('ui/')) {
+        if (relativePath.startsWith('src/')) {
             relativePath = relativePath.substring(4);
         }
         return dir + relativePath;
@@ -32,8 +32,11 @@ const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(
 const config = {
     mode : isProduction ? 'production' : 'development',
     entry : {
-        pentagonal : './ui/js/pentagonal.ts',
-        runtime : './ui/js/runtime.ts',
+        runtime : './ui/ts/runtime.ts',
+        pentagonal : {
+            import : './ui/ts/pentagonal.ts',
+            dependOn: 'runtime',
+        },
     },
     output : {
         library : {
@@ -46,8 +49,8 @@ const config = {
         },
         path : __dirname,
         filename : "assets/js/[name].js",
-        hotUpdateChunkFilename: 'tmp/[name].hot-update.js',
-        hotUpdateMainFilename: 'tmp/[runtime].hot-update.json'
+        hotUpdateChunkFilename: './.tmp/[name].hot-update.js',
+        hotUpdateMainFilename: './.tmp/[runtime].hot-update.json'
     },
     watchOptions : {
         ignored : /(^[\/\\](node_modules|vendor|js|css|img|fonts)[\/\\]|\.(lock|md|log|php|ya?ml)$|(^|[\/\\])\.)/,
@@ -68,13 +71,13 @@ const config = {
             writeToDisk: true
         },
         client: {
-            webSocketURL: 'ws://localhost:9292/ws',
+            webSocketURL: 'ws://localhost:9192/ws',
             overlay: {
                 warnings: true,
                 errors: true,
             },
         },
-        port: 9292,
+        port: 9192,
         webSocketServer: 'ws',
         watchFiles : [
             'ui/**/*.{ts,scss}',

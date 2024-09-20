@@ -29,10 +29,10 @@ class AdminAreaMenuButton extends AbstractHook
         if (!is_string($vars)) {
             $vars = '';
         }
-        $link = json_encode(URL::addonPagUrl(), JSON_UNESCAPED_SLASHES);
+        $link = json_encode(URL::addonPageUrl(), JSON_UNESCAPED_SLASHES);
         $name = json_encode(Addon::ADDON_CONFIG['name'], JSON_UNESCAPED_SLASHES);
         $definitions = [
-            'addon_name' => $this->getHooksService()->getServices()->getCore()->getAddon()->getAddonName(),
+            'addon_name' => $this->getHooksService()->getCore()->getAddon()->getAddonName(),
             'addon_url' => URL::addonUrl(),
             'addons_url' => URL::addOnsURL(),
             'admin_url' => URL::adminUrl(),

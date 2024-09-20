@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 
 use Pentagonal\Neon\WHMCS\Addon\Core;
+use Pentagonal\Neon\WHMCS\Addon\Dispatcher\AdminDispatcher;
 use WHMCS\Utility\Environment\WebHelper;
 use function ltrim;
 use function rtrim;
@@ -131,15 +132,15 @@ final class URL
     /**
      * Get admin addon URL
      *
-     * @param string $page
+     * @param string $routePath
      * @return string
      */
-    public static function addonPagUrl(string $page = ''): string
+    public static function addonPageUrl(string $routePath = ''): string
     {
-        $page = trim($page);
-        if ($page) {
-            $page = '&page=' . urlencode($page);
+        $routePath = trim($routePath);
+        if ($routePath) {
+            $routePath = '&' . AdminDispatcher::ROUTE_SELECTOR . '=' . urlencode($routePath);
         }
-        return self::adminUrl(self::ADDON_FILE . '?module=' . Core::factory()->getAddon()->getAddonName() . $page);
+        return self::adminUrl(self::ADDON_FILE . '?module=' . Core::factory()->getAddon()->getAddonName() . $routePath);
     }
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Abstracts;
 
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HookInterface;
-use Pentagonal\Neon\WHMCS\Addon\Interfaces\HooksServiceInterface;
+use Pentagonal\Neon\WHMCS\Addon\Interfaces\HooksInterface;
 use function array_filter;
 use function array_unique;
 use function get_class;
@@ -37,9 +37,9 @@ abstract class AbstractBaseHook implements HookInterface
     protected int $priority = 10;
 
     /**
-     * @var HooksServiceInterface $hooksService The service
+     * @var HooksInterface $hooksService The service
      */
-    private HooksServiceInterface $hooksService;
+    private HooksInterface $hooksService;
 
     /**
      * @var bool $dispatched The hook dispatched status
@@ -54,9 +54,9 @@ abstract class AbstractBaseHook implements HookInterface
     /**
      * Hook constructor.
      *
-     * @param HooksServiceInterface $hooks
+     * @param HooksInterface $hooks
      */
-    public function __construct(HooksServiceInterface $hooks)
+    public function __construct(HooksInterface $hooks)
     {
         $this->hooksService = $hooks;
     }
@@ -64,9 +64,9 @@ abstract class AbstractBaseHook implements HookInterface
     /**
      * Get the service
      *
-     * @return HooksServiceInterface
+     * @return HooksInterface
      */
-    public function getHooksService(): HooksServiceInterface
+    public function getHooksService(): HooksInterface
     {
         return $this->hooksService;
     }

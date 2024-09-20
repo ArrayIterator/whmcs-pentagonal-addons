@@ -30,7 +30,7 @@ class AdminAreaHeadOutput extends AbstractHook
         }
 
         // only serve if it was on addon page
-        $isAddonPage = $this->getHooksService()->getServices()->getCore()->getAddon()->isAddonPage();
+        $isAddonPage = $this->getHooksService()->getCore()->getAddon()->isAddonPage();
         $depends = [
             HtmlAttributes::buildTag('link', [
                 'rel' => 'stylesheet',

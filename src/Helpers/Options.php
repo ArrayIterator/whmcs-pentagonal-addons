@@ -223,33 +223,39 @@ final class Options
      */
     protected function getOption(string $name, &$exist = null)
     {
-        $key   = $this->initialize()->normalizeOptionName($name);
-        $exist = !isset($this->notExists[$key]);
-        if (!$exist) {
-            return null;
-        }
-        if (isset($this->options[$key])) {
-            return $this->options[$key][1];
-        }
-        if (isset($this->queue[$key])) {
-            return $this->queue[$key][1];
-        }
-        $value = Capsule::table(self::TABLE_OPTIONS)
-            ->where('name', $key)
-            ->first();
-        if (!$value) {
-            $exist = false;
-            while (count($this->notExists) >= self::MAX_NOT_EXISTS_RECORD) {
-                array_shift($this->notExists);
+        $performance = Performance::profile('options_get', self::class)
+            ->setDataValue('name', $name);
+        try {
+            $key = $this->initialize()->normalizeOptionName($name);
+            $exist = !isset($this->notExists[$key]);
+            if (!$exist) {
+                return null;
             }
-            $this->notExists[$key] = true;
-            return null;
+            if (isset($this->options[$key])) {
+                return $this->options[$key][1];
+            }
+            if (isset($this->queue[$key])) {
+                return $this->queue[$key][1];
+            }
+            $value = Capsule::table(self::TABLE_OPTIONS)
+                ->where('name', $key)
+                ->first();
+            if (!$value) {
+                $exist = false;
+                while (count($this->notExists) >= self::MAX_NOT_EXISTS_RECORD) {
+                    array_shift($this->notExists);
+                }
+                $this->notExists[$key] = true;
+                return null;
+            }
+            $this->options[$key] = [
+                $name,
+                Serialization::shouldUnSerialize($value->value),
+            ];
+            return $this->options[$key][1];
+        } finally {
+            $performance->end();
         }
-        $this->options[$key] = [
-            $name,
-            Serialization::shouldUnSerialize($value->value),
-        ];
-        return $this->options[$key][1];
     }
 
     /**

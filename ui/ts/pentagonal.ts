@@ -1,9 +1,12 @@
 import "../scss/pentagonal.scss";
-
 ((w: Window) : void => {
     const {
         document : d
     } = w;
+    // if (module && module.hot) {
+    //     // @ts-expect-error ignore
+    //     module.hot.accept();
+    // }
     // run app
     const run = () : void => {
         const baseURL = new URL(w.location.href);
@@ -27,7 +30,7 @@ import "../scss/pentagonal.scss";
             return;
         }
         d.body.setAttribute('data-pentagonal-loaded', 'true');
-        console.debug('5-GoNAL');
+        console.debug('5-GoNAL Loaded');
         const nav = d.querySelector('body > .navigation');
         const footer = d.querySelector('body > .footerbar');
         if (nav && footer) {

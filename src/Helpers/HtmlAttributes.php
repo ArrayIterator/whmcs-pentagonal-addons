@@ -299,88 +299,92 @@ class HtmlAttributes
      */
     public static function buildAttributesArray(array $attributes): array
     {
+        $performance = Performance::profile('build_attributes', __CLASS__);
         $attr = [];
-        foreach ($attributes as $key => $value) {
-            if (!is_string($key) || ($key = trim($key)) === '') {
-                continue;
-            }
-            // trim
-            $key = trim($key);
-            // attribute key does not allow whitespace
-            // skip!
-            if (preg_match('~\s~i', $key)) {
-                continue;
-            }
-            $lowerKey = strtolower($key);
-            if (is_bool($value)) {
-                if (isset(self::ATTRIBUTES_BOOLEAN_TRUE_TYPES[$lowerKey])) {
-                    // skip if false
-                    if (!$value) {
-                        continue;
-                    }
-                    $value = self::ATTRIBUTES_BOOLEAN_TRUE_TYPES[$lowerKey];
-                } else {
-                    $value = $value ? 'true' : 'false';
-                }
-            } elseif ($value instanceof Stringable
-                || is_scalar($value)
-            ) {
-                $value = (string) $value;
-            } /** @noinspection PhpConditionAlreadyCheckedInspection */ elseif ($value instanceof JsonSerializable) {
-                $value = json_encode($value, JSON_UNESCAPED_SLASHES);
-            } elseif ($value === null) {
-                // null is true
-                $value = self::ATTRIBUTES_BOOLEAN_TRUE_TYPES[$lowerKey] ?? '';
-            }
-            if ($lowerKey === 'class') {
-                $values = [];
-                $value = is_string($value)
-                    ? explode(' ', $value)
-                    : (is_iterable($value) ? $value : []);
-                foreach ($value as $val) {
-                    if (!is_string($val)) {
-                        continue;
-                    }
-                    $values[] = DataNormalizer::normalizeHtmlClass($val);
-                }
-                $values = array_filter($values);
-                $value = implode(' ', $values);
-            }
-
-            if (!is_string($value)) {
-                continue;
-            }
-
-            // filter!
-            if (isset(self::ATTRIBUTES_NUMERIC_TYPES[$lowerKey])) {
-                $value = is_numeric($value) ? $value : '';
-            } elseif (isset(self::ATTRIBUTES_INTEGER_TYPES[$lowerKey])) {
-                if (is_numeric($value)) {
-                    $value = (string) intval($value);
-                } else {
-                    $value = '';
-                }
-            }
-
-            $key = self::HTML_ATTRIBUTES[$lowerKey]??$key;
-            if ($value === '') {
-                if (in_array($key, self::NO_ATTRIBUTES)) {
+        try {
+            foreach ($attributes as $key => $value) {
+                if (!is_string($key) || ($key = trim($key)) === '') {
                     continue;
                 }
-                $attr[$key] = $key;
-            } else {
-                if ($key === 'id') {
-                    $value = DataNormalizer::normalizeHtmlClass($value);
+                // trim
+                $key = trim($key);
+                // attribute key does not allow whitespace
+                // skip!
+                if (preg_match('~\s~i', $key)) {
+                    continue;
                 }
-                $value = htmlspecialchars(
-                    $value,
-                    ENT_QUOTES | ENT_SUBSTITUTE,
-                    'UTF-8'
-                );
-                $attr[$key] = sprintf('%s="%s"', $key, $value);
-            }
-        }
+                $lowerKey = strtolower($key);
+                if (is_bool($value)) {
+                    if (isset(self::ATTRIBUTES_BOOLEAN_TRUE_TYPES[$lowerKey])) {
+                        // skip if false
+                        if (!$value) {
+                            continue;
+                        }
+                        $value = self::ATTRIBUTES_BOOLEAN_TRUE_TYPES[$lowerKey];
+                    } else {
+                        $value = $value ? 'true' : 'false';
+                    }
+                } elseif ($value instanceof Stringable
+                    || is_scalar($value)
+                ) {
+                    $value = (string)$value;
+                } /** @noinspection PhpConditionAlreadyCheckedInspection */ elseif ($value instanceof JsonSerializable) {
+                    $value = json_encode($value, JSON_UNESCAPED_SLASHES);
+                } elseif ($value === null) {
+                    // null is true
+                    $value = self::ATTRIBUTES_BOOLEAN_TRUE_TYPES[$lowerKey] ?? '';
+                }
+                if ($lowerKey === 'class') {
+                    $values = [];
+                    $value = is_string($value)
+                        ? explode(' ', $value)
+                        : (is_iterable($value) ? $value : []);
+                    foreach ($value as $val) {
+                        if (!is_string($val)) {
+                            continue;
+                        }
+                        $values[] = DataNormalizer::normalizeHtmlClass($val);
+                    }
+                    $values = array_filter($values);
+                    $value = implode(' ', $values);
+                }
 
+                if (!is_string($value)) {
+                    continue;
+                }
+
+                // filter!
+                if (isset(self::ATTRIBUTES_NUMERIC_TYPES[$lowerKey])) {
+                    $value = is_numeric($value) ? $value : '';
+                } elseif (isset(self::ATTRIBUTES_INTEGER_TYPES[$lowerKey])) {
+                    if (is_numeric($value)) {
+                        $value = (string)intval($value);
+                    } else {
+                        $value = '';
+                    }
+                }
+
+                $key = self::HTML_ATTRIBUTES[$lowerKey] ?? $key;
+                if ($value === '') {
+                    if (in_array($key, self::NO_ATTRIBUTES)) {
+                        continue;
+                    }
+                    $attr[$key] = $key;
+                } else {
+                    if ($key === 'id') {
+                        $value = DataNormalizer::normalizeHtmlClass($value);
+                    }
+                    $value = htmlspecialchars(
+                        $value,
+                        ENT_QUOTES | ENT_SUBSTITUTE,
+                        'UTF-8'
+                    );
+                    $attr[$key] = sprintf('%s="%s"', $key, $value);
+                }
+            }
+        } finally {
+            $performance->stop();
+        }
         return $attr;
     }
 }

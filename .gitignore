@@ -95,5 +95,7 @@ assets/*
 # ignore map
 **/*.map
 tmp/
+.tmp/
 temp/
+.temp/
 stubs/

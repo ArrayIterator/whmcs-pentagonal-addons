@@ -37,7 +37,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Theme;
 
-use Pentagonal\Neon\WHMCS\Addon\Services\Hooks;
+use Pentagonal\Neon\WHMCS\Addon\Hooks;
 
 if (!isset($hooks) || !$hooks instanceof Hooks) {
     return;
@@ -72,9 +72,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Theme;
 
-use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractService;
-use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;
-use Pentagonal\Neon\WHMCS\Addon\Libraries\Services;
+use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractService;use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;use Pentagonal\Neon\WHMCS\Addon\Services;
 
 if (!isset($services) || !$services instanceof Services) {
     return;

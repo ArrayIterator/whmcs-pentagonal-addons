@@ -6,6 +6,8 @@ namespace Pentagonal\Neon\WHMCS\Addon;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Models\AddonSetting;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Models\Configuration;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\SessionFlash;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\URL;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Config;
@@ -353,7 +355,6 @@ final class Addon
         }
 
         $this->activateCalled = true;
-
         $success = [
             'status'  => 'success',
             'description' => sprintf('Module %s Activated', $this->getAddonName())
@@ -365,6 +366,9 @@ final class Addon
         if (!is_numeric($roleId)) {
             return $error;
         }
+        $stopCode = Random::bytes();
+        $performance = Performance::profile('addon_activate', Addon::class)
+            ->setStopCode($stopCode);
         try {
             $settings = AddonSetting::find($module, 'access');
             $succeed = true;
@@ -463,6 +467,8 @@ final class Addon
                 'status'  => 'error',
                 'description' => $e->getMessage()
             ];
+        } finally {
+            $performance->stop([], $stopCode);
         }
     }
 
