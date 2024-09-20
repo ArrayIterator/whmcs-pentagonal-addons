@@ -20,7 +20,7 @@ interface DispatcherHandlerInterface
      *
      * @param $vars
      * @param AdminDispatcherHandler $dispatcherHandler
-     * @return mixed
+     * @return mixed|string|object
      */
     public function process($vars, AdminDispatcherHandler $dispatcherHandler);
 

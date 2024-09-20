@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Libraries\Generator\Menu;
 
 use ArrayIterator;
-use GuzzleHttp\Psr7\ServerRequest;
-use GuzzleHttp\Psr7\Uri;
 use IteratorAggregate;
+use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\HtmlAttributes;
+use Pentagonal\Neon\WHMCS\Addon\Http\ServerRequest;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -228,8 +228,8 @@ class Menus implements Stringable, IteratorAggregate
         if (!$request || $link === null) {
             return $attributes;
         }
-        if (!$link instanceof UriInterface) {
-            $link = new Uri($link);
+        if (is_string($link)) {
+            $link = Core::factory()->getHttpFactory()->getUriFactory()->createUri($link);
             if ($link->getHost() === '') {
                 $link = $link->withHost($request->getUri()->getHost());
             }
@@ -352,7 +352,10 @@ class Menus implements Stringable, IteratorAggregate
         if ($maxDepth < 0) {
             return '';
         }
-        $request = $request??ServerRequest::fromGlobals();
+        $request = $request??ServerRequest::fromGlobals(
+            Core::factory()->getHttpFactory()->getServerRequestFactory(),
+            Core::factory()->getHttpFactory()->getStreamFactory()
+        );
         $tag = !in_array($listTag, ['ul', 'ol']) ? 'div' : $listTag;
         $subListTag = $tag === 'div' ? 'div' : 'li';
 

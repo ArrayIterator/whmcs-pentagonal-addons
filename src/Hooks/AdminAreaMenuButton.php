@@ -6,7 +6,7 @@ namespace Pentagonal\Neon\WHMCS\Addon\Hooks;
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractHook;
 use Pentagonal\Neon\WHMCS\Addon\Addon;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\URL;
-use function is_string;
+use function is_array;
 use function json_encode;
 use const JSON_UNESCAPED_SLASHES;
 
@@ -19,16 +19,15 @@ class AdminAreaMenuButton extends AbstractHook
     /**
      * @var string $hooks the hook name
      */
-    protected $hooks = 'AdminAreaFooterOutput';
+    protected $hooks = 'AdminAreaPage';
+    // protected $hooks = 'AdminAreaFooterOutput';
 
     /**
      * @inheritDoc
      */
     protected function dispatch($vars)
     {
-        if (!is_string($vars)) {
-            $vars = '';
-        }
+        $vars = !is_array($vars) ? [] : $vars;
         $link = json_encode(URL::addonPageUrl(), JSON_UNESCAPED_SLASHES);
         $name = json_encode(Addon::ADDON_CONFIG['name'], JSON_UNESCAPED_SLASHES);
         $definitions = [
@@ -43,23 +42,32 @@ class AdminAreaMenuButton extends AbstractHook
             'module_url' => URL::moduleURL(),
         ];
         $definitions  = json_encode($definitions, JSON_UNESCAPED_SLASHES);
+        $vars['jscode'] ??= '';
         // inject button to menu
-        return $vars . <<<HTML
-<script type="text/javascript">
-(() => {
-   const menuAutomation = document.getElementById('Menu-Automation-Status')?.closest('li');
-   if (!menuAutomation) {
-       return;
+        $vars['jscode'] .= <<<JS
+
+;((w) => {
+    const d = w.document;
+    const run = () => { 
+       const menuAutomation = d.getElementById('Menu-Automation-Status')?.closest('li');
+       if (!menuAutomation) {
+           return;
+       }
+       const li = d.createElement('li');
+       let _class = menuAutomation.className !== '' ? menuAutomation.className : 'bt';
+       li.classList.add('pentagonal-menu-button', _class);
+       menuAutomation.before(li);
+       li.innerHTML = `<a href={$link}
+            class="menu-link-icon"
+            data-toggle="tooltip"
+            data-placement="bottom"
+            title={$name}>
+             <i class="fa fa-terminal always"></i>
+             <span class="visible-sidebar">Pentagonal</span>
+       </a>`;
    }
-   const li = document.createElement('li');
-   let _class = menuAutomation.className !== '' ? menuAutomation.className : 'bt';
-   li.classList.add('pentagonal-menu-button', _class);
-   menuAutomation.before(li);
-   li.innerHTML = `<a href={$link} class="menu-link-icon" data-toggle="tooltip" data-placement="bottom" title={$name}>
-         <i class="fa fa-terminal always"></i>
-         <span class="visible-sidebar">Pentagonal</span>
-   </a>`;
-})();
+    ['complete', 'interactive'].includes(d.readyState) ? run() : w.addEventListener('DOMContentLoaded', run);
+})(window);
 
 ((w) => {
     w['pentagonal_definition_uri'] || Object.defineProperty(w, 'pentagonal_definition_uri', {
@@ -68,7 +76,7 @@ class AdminAreaMenuButton extends AbstractHook
         value : {$definitions}
     })
 })(window);
-</script>
-HTML;
+JS;
+        return $vars;
     }
 }

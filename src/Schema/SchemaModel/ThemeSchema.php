@@ -11,7 +11,6 @@ use function dirname;
 use function file_exists;
 use function is_bool;
 use function realpath;
-use function var_dump;
 use const DIRECTORY_SEPARATOR;
 
 class ThemeSchema implements ThemeSchemaInterface

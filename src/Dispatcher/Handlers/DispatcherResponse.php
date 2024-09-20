@@ -38,9 +38,15 @@ class DispatcherResponse implements DispatcherResponseInterface
         $data = null,
         ?Throwable $error = null
     ) {
-        $this->data = $data;
-        $this->error = $error;
-        $this->statusCode = $statusCode??($error ? 500 : 200);
+        if ($error === null && $data instanceof Throwable && ($statusCode === null || $statusCode >= 400)) {
+            $this->error = $data;
+            $this->data = null;
+            $this->statusCode = $statusCode??500;
+        } else {
+            $this->data = $data;
+            $this->error = $error;
+            $this->statusCode = $statusCode??($this->error ? 500 : 200);
+        }
     }
 
     /**

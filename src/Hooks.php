@@ -388,7 +388,7 @@ final class Hooks implements HooksInterface
             if (!$hooksFile || !file_exists($hooksFile)) {
                 return;
             }
-            $includePerformance = Performance::profile('hooks_init_include',Hooks::class)
+            $includePerformance = Performance::profile('hooks_init_include', Hooks::class)
             ->setStopCode($stopCode)
             ->setData([
                 'file' => $hooksFile

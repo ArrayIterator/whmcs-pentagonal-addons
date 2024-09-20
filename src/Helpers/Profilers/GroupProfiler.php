@@ -6,6 +6,7 @@ namespace Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers;
 use ArrayIterator;
 use Countable;
 use IteratorAggregate;
+use JsonSerializable;
 use SplObjectStorage;
 use Traversable;
 use function iterator_to_array;
@@ -14,7 +15,7 @@ use function iterator_to_array;
  * Class GroupProfiler is a group of profilers
  * @template-implements Traversable<Profiler>
  */
-final class GroupProfiler implements Countable, IteratorAggregate
+final class GroupProfiler implements Countable, IteratorAggregate, JsonSerializable
 {
     /**
      * @var string $name the group name
@@ -146,5 +147,10 @@ final class GroupProfiler implements Countable, IteratorAggregate
     public function getIterator() : Traversable
     {
         return new ArrayIterator($this->getProfilers());
+    }
+
+    public function jsonSerialize() : array
+    {
+        return $this->getProfilers();
     }
 }

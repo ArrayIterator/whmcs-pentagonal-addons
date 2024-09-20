@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces;
 
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Themes;
-use stdClass;
 
 interface ThemeSchemaInterface extends SingleSchemaInterface
 {

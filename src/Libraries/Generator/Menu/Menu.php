@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Libraries\Generator\Menu;
 
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
-use function call_user_func;
 use function is_array;
 use function is_callable;
 use function is_int;
@@ -13,53 +11,6 @@ use function is_string;
 
 class Menu extends AbstractMenu
 {
-    /**
-     * @var ?callable $callablePermission Callable Permission
-     */
-    private $callablePermission;
-
-    /**
-     * @param Menus $menus
-     * @param string $id
-     * @param array $attributes
-     * @param int $priority
-     * @param $link
-     * @param string|null $linkText
-     * @param callable|null $callablePermission
-     */
-    public function __construct(
-        Menus $menus,
-        string $id,
-        array $attributes = [],
-        int $priority = 10,
-        $link = null,
-        ?string $linkText = null,
-        ?callable $callablePermission = null
-    ) {
-        $this->linkText = $linkText;
-        $this->id = $id;
-        $this->priority = $priority;
-        $this->attributes = $attributes;
-        $this->link = $link;
-        $this->callablePermission = $callablePermission;
-        parent::__construct($menus);
-    }
-
-    /**
-     * Call Permission
-     *
-     * @param ServerRequestInterface|null $request
-     * @return bool
-     */
-    public function permitted(
-        ?ServerRequestInterface $request = null
-    ) : bool {
-        $res = is_callable($this->callablePermission)
-            ? call_user_func($this->callablePermission, $request, $this)
-            : true;
-        return $res === true;
-    }
-
     /**
      * Create Menu from Array
      *
@@ -107,8 +58,7 @@ class Menu extends AbstractMenu
                 $sub = static::createFromArray(
                     $menus,
                     $subMenuId,
-                    $subMenu,
-                    $menu
+                    $subMenu
                 );
                 $menu->addSubMenu($sub);
             }

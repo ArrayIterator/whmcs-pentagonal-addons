@@ -6,15 +6,19 @@ namespace Pentagonal\Neon\WHMCS\Addon\Dispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherHandlerApiInterface;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherHandlerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherResponseInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 use SplObjectStorage;
 use Throwable;
+use function is_object;
 use function is_string;
 use function iterator_to_array;
+use function method_exists;
 use function ob_end_clean;
 use function ob_get_clean;
-use function ob_get_length;
 use function ob_get_level;
+use function ob_start;
 use function strtolower;
 
 class AdminDispatcherHandler
@@ -163,15 +167,58 @@ class AdminDispatcherHandler
     }
 
     /**
+     * Check if handler is processable
+     *
+     * @param DispatcherHandlerInterface $handler
+     * @param $vars
+     * @return bool
+     */
+    public function isProcessable(DispatcherHandlerInterface $handler, $vars) : bool
+    {
+        $isApi = $this->getAdminDispatcher()->isApiRequest();
+        $routeQ = $this->getAdminDispatcher()->getRouteQuery();
+        $handlerPage = $handler->getRoutePath();
+        $isCaseSensitive = $handler->isCaseSensitivePage();
+        $lowerPage = is_string($routeQ) ? strtolower($routeQ) : $routeQ;
+        if ($handlerPage !== '*') { // process if *
+            if ($isCaseSensitive) {
+                if ($handlerPage !== $routeQ) {
+                    return false;
+                }
+            } elseif (strtolower($handlerPage) !== $lowerPage) {
+                return false;
+            }
+        }
+
+        return $handler->isProcessable($vars) && (
+            !$isApi && !$handler instanceof DispatcherHandlerApiInterface
+            || $isApi && $handler instanceof DispatcherHandlerApiInterface
+        );
+    }
+
+    /**
+     * Clear buffer
+     *
+     * @param int $previousLevel
+     * @return void
+     */
+    private function clearBuffer(int $previousLevel) : void
+    {
+        if ($previousLevel < ob_get_level()) {
+            ob_end_clean();
+        }
+    }
+
+    /**
      * Process the handler
      *
      * @param $vars
      * @param $handled
      * @param $error
-     * @return DispatcherResponseInterface|string|bool
      */
     public function process($vars, &$handled = null, &$error = null)
     {
+        $handled = false;
         if ($this->isProcessed()) {
             $error = new RuntimeException(
                 'Already processed'
@@ -186,56 +233,38 @@ class AdminDispatcherHandler
             $this->setMessage('error', 'Access Denied');
             return false;
         }
-        $isApi = $this->getAdminDispatcher()->isApi();
-        $page = $this->getAdminDispatcher()->getPage();
-        $lowerPage = is_string($page) ? strtolower($page) : $page;
-        $handled = false;
         foreach ($this->getHandlers() as $handler) {
-            $isApiHandler = $handler instanceof DispatcherHandlerApiInterface;
-            $handlerPage = $handler->getRoutePath();
-            $isCaseSensitive = $handler->isCaseSensitivePage();
-            $canBeProcess = ($isApi ? $isApiHandler : !$isApiHandler);
-            if (!$canBeProcess) {
+            if (!$this->isProcessable($handler, $vars)) {
                 continue;
             }
-            if ($handlerPage !== '*') {
-                if ($isCaseSensitive) {
-                    if ($handlerPage !== $page) {
-                        continue;
-                    }
-                } elseif (strtolower($handlerPage) !== $lowerPage) {
-                    continue;
+
+            $handled = true;
+            $level = ob_get_level();
+            ob_start();
+            try {
+                $result = $handler->process($vars, $this);
+            } catch (Throwable $e) {
+                $error = $e;
+                return false;
+            }
+            $httpFactory = $this->getAdminDispatcher()->getAdminService()->getServices()->getCore()->getHttpFactory();
+            if ($result instanceof DispatcherResponseInterface
+                || $result instanceof ResponseInterface
+                || $result instanceof StreamInterface
+            ) {
+                $this->clearBuffer($level);
+            } elseif (is_string($result) || is_object($result) && method_exists($result, '__toString')) {
+                $this->clearBuffer($level);
+                $result = $httpFactory->getStreamFactory()->createStream((string) $result);
+            } else {
+                if ($level < ob_get_level()) {
+                    $result = $httpFactory->getStreamFactory()->createStream((string) ob_get_clean());
                 }
             }
-            // stop here
-            if ($handler->isProcessable($vars)) {
-                $handled = true;
-                $level = ob_get_level();
-                ob_start();
-                try {
-                    $result = $handler->process($vars, $this);
-                } catch (Throwable $e) {
-                    $error = $e;
-                    return false;
-                } finally {
-                    /** @noinspection PhpConditionAlreadyCheckedInspection */
-                    if (is_string($result)
-                        || $result instanceof DispatcherResponseInterface
-                        || ob_get_length() === 0
-                    ) {
-                        if ($level < ob_get_level()) {
-                            ob_end_clean();
-                        }
-                    } else {
-                        if ($level < ob_get_level()) {
-                            $result = ob_get_clean();
-                        }
-                    }
-                }
-                $this->processedHandler = $handler;
-                return $result;
-            }
+            $this->processedHandler = $handler;
+            return $result;
         }
+        $page = $this->getAdminDispatcher()->getRouteQuery()??'(null)';
         $error = new RuntimeException(
             'No handler found for page ' . $page
         );

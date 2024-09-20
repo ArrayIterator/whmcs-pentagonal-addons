@@ -5,6 +5,7 @@ namespace Pentagonal\Neon\WHMCS\Addon\Libraries;
 
 use Exception;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\ApplicationConfig;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\URL;
 use Smarty;
 use SmartyBC;
@@ -41,8 +42,8 @@ class SmartyAdmin extends SmartyBC
     protected function assignDefault()
     {
         $this->assign([
-            'pentagonal_addon_url' => URL::addonUrl(),
-            'addon_url' => URL::addOnsURL(),
+            'addon_url' => URL::addonUrl(),
+            'addons_url' => URL::addOnsURL(),
             'admin_url' => URL::adminUrl(),
             'base_url' => URL::baseUrl(),
             'theme_url' => URL::themeUrl(),
@@ -51,8 +52,8 @@ class SmartyAdmin extends SmartyBC
             'module_url' => URL::moduleURL(),
         ]);
         $functions = [
-            'pentagonal_addon_url' => [URL::class, 'addonUrl'],
-            'addon_url' => [URL::class, 'addOnsURL'],
+            'addon_url' => [URL::class, 'addonUrl'],
+            'addons_url' => [URL::class, 'addOnsURL'],
             'admin_url' => [URL::class, 'adminUrl'],
             'base_url' => [URL::class, 'baseUrl'],
             'theme_url' => [URL::class, 'themeUrl'],
@@ -62,17 +63,25 @@ class SmartyAdmin extends SmartyBC
         ];
         foreach ($functions as $name => $callback) {
             try {
-                $this->registerPlugin("function", $name, function ($args) use ($callback) {
+                $this->registerPlugin(Smarty::PLUGIN_FUNCTION, $name, function ($args) use ($callback) {
                     $path = $args['path']??null;
                     return $callback((string) $path);
                 });
             } catch (Throwable $e) {
+                Logger::error(
+                    $e,
+                    [
+                        'type' => 'error',
+                        'method' => 'assignDefault',
+                        'smarty_function' => $name
+                    ]
+                );
                 // pass
             }
         }
         try {
             $this->registerPlugin("modifier", "sprintf2", ["WHMCS\\Smarty", "sprintf2Modifier"]);
-            $this->registerPlugin("function", "lang", ["WHMCS\\Smarty", "langFunction"]);
+            $this->registerPlugin(Smarty::PLUGIN_FUNCTION, "lang", ["WHMCS\\Smarty", "langFunction"]);
             $this->registerFilter("pre", ["WHMCS\\Smarty", "preFilterSmartyTemplateVariableScopeResolution"]);
             $policy = Di::getFacadeApplication()->make("WHMCS\\Smarty\\Security\\Policy", [$this, 'system']);
             $this->enableSecurity($policy);

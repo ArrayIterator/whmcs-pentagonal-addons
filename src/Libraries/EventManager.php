@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Libraries;
 
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Throwable;
 use function array_pop;
@@ -106,69 +108,86 @@ class EventManager implements EventManagerInterface
         if (!isset($this->listeners[$name])) {
             return $param;
         }
+
         if (count($this->listeners[$name]) === 0) {
             unset($this->listeners[$name]);
             return $param;
         }
-
-        if (!isset($this->originalParams[$name])) {
-            $this->originalParams[$name] = [];
-        }
-
-        /**
-         * @var Collector<array<bool, callable>> $listeners
-         */
-        $listeners = $this->listeners[$name];
-        $listeners->rewind();
-        $this->originalParams[$name][] = $param;
-        do {
-            $current = $listeners->current();
-            if ($current === false) {
-                break;
+        $stopCode = Random::bytes();
+        $performance = Performance::profile('apply', __CLASS__)
+            ->setStopCode($stopCode)
+            ->setData([
+                'event' => $name
+            ]);
+        try {
+            if (!isset($this->originalParams[$name])) {
+                $this->originalParams[$name] = [];
             }
-            $index = $listeners->key();
+
             /**
-             * @var callable $callback
-             * @var bool $once
+             * @var Collector<array<bool, callable>> $listeners
              */
-            $callback = $current[1];
-            $once = $current[0];
-            if ($this->in($name, $callback)) { // skip
-                continue;
-            }
-            if ($once) {
-                unset($listeners[$index]);
-            }
-            $this->current = [$name, $callback];
-            $this->processing[$name][$index] = $callback;
-            try {
-                $param = $callback($param, ...$args);
-            } catch (Throwable $e) {
-                Logger::error($e, [
-                    'type' => 'event',
-                    'method' => 'apply',
-                    'event' => $name,
-                    'callback' => $callback
-                ]);
-                continue;
-            } finally {
-                // detach the callback
-                $index = array_search($callback, $this->processing[$name], true);
-                if ($index !== false) {
-                    unset($this->processing[$name][$index]);
+            $listeners = $this->listeners[$name];
+            $listeners->rewind();
+            $this->originalParams[$name][] = $param;
+            do {
+                $current = $listeners->current();
+                if ($current === false) {
+                    break;
                 }
-                $this->current = [];
-            }
-        } while ($listeners->next() !== false);
+                $index = $listeners->key();
+                /**
+                 * @var callable $callback
+                 * @var bool $once
+                 */
+                $callback = $current[1];
+                $once = $current[0];
+                if ($this->in($name, $callback)) { // skip
+                    continue;
+                }
+                if ($once) {
+                    unset($listeners[$index]);
+                }
+                $this->current = [$name, $callback];
+                $this->processing[$name][$index] = $callback;
+                $applyPerformance = Performance::profile('apply_call', __CLASS__)
+                    ->setStopCode($stopCode)
+                    ->setData([
+                        'event' => $name,
+                        'callback' => $callback
+                    ]);
+                try {
+                    $param = $callback($param, ...$args);
+                } catch (Throwable $e) {
+                    Logger::error($e, [
+                        'type' => 'event',
+                        'method' => 'apply',
+                        'event' => $name,
+                        'callback' => $callback
+                    ]);
+                    continue;
+                } finally {
+                    // detach the callback
+                    $index = array_search($callback, $this->processing[$name], true);
+                    if ($index !== false) {
+                        unset($this->processing[$name][$index]);
+                    }
+                    $this->current = [];
+                    $applyPerformance->stop([], $stopCode);
+                }
+            } while ($listeners->next() !== false);
 
-        if (count($listeners[$name]) === 0) {
-            unset($listeners[$name]);
-        }
-        if (isset($this->originalParams[$name])) {
-            array_pop($this->originalParams[$name]);
-            if (count($this->originalParams[$name]) === 0) {
-                unset($this->originalParams[$name]);
+            if (count($listeners[$name]) === 0) {
+                unset($listeners[$name]);
             }
+            if (isset($this->originalParams[$name])) {
+                array_pop($this->originalParams[$name]);
+                if (count($this->originalParams[$name]) === 0) {
+                    unset($this->originalParams[$name]);
+                }
+            }
+        } finally {
+            $performance->stop([], $stopCode);
         }
         return $param;
     }
@@ -189,6 +208,11 @@ class EventManager implements EventManagerInterface
      */
     public function detach(string $name, ?callable $eventCallback = null): int
     {
+        $performance = Performance::profile('detach', __CLASS__)
+            ->setData([
+                'event' => $name,
+                'callback' => $eventCallback
+            ]);
         $result = 0;
         if (isset($this->listeners[$name])) {
             if ($eventCallback === null) {
@@ -207,6 +231,10 @@ class EventManager implements EventManagerInterface
                 }
             }
         }
+        $performance->stop([
+            'count' => $result
+        ]);
+
         return $result;
     }
 

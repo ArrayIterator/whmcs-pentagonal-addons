@@ -6,8 +6,16 @@ namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 use function array_filter;
 use function array_map;
 use function explode;
+use function get_object_vars;
 use function implode;
+use function is_array;
+use function is_object;
+use function is_string;
+use function preg_quote;
+use function realpath;
 use function str_contains;
+use function str_replace;
+use const ROOTDIR;
 
 class DataNormalizer
 {
@@ -216,5 +224,35 @@ class DataNormalizer
             return iterator_to_array($string);
         }
         return null;
+    }
+
+    private static ? string $rootDirQuoted = null;
+
+    /**
+     * Protect / Replace Root Dir
+     *
+     * @param $data
+     * @param string $replacement
+     * @return array|mixed|string|string[]
+     */
+    public static function protectRootDir($data, string $replacement = '[ROOT]')
+    {
+        if (is_array($data)) {
+            foreach ($data as $key => $item) {
+                $data[$key] = self::protectRootDir($item, $replacement);
+            }
+            return $data;
+        }
+        if (is_object($data)) {
+            foreach (get_object_vars($data) as $key => $item) {
+                $data->$key = self::protectRootDir($item, $replacement);
+            }
+            return $data;
+        }
+        if (!is_string($data)) {
+            return $data;
+        }
+        self::$rootDirQuoted ??= realpath(ROOTDIR)?:ROOTDIR;
+        return str_replace(self::$rootDirQuoted, $replacement, $data);
     }
 }

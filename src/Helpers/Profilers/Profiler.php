@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers;
 
+use JsonSerializable;
 use function array_merge_recursive;
 use function memory_get_usage;
 use function microtime;
 
-final class Profiler
+final class Profiler implements JsonSerializable
 {
     /**
      * @var GroupProfiler $groupProfiler the group profiler
@@ -396,5 +397,27 @@ final class Profiler
         $start = $this->getStartMemory();
         $end = $this->getEndMemory();
         return $end > $start ? $end - $start : 0;
+    }
+
+    /**
+     * @return array{
+     *     "name": string,
+     *     "start": float,
+     *     "end": float,
+     *     "startMemory": int,
+     *     "endMemory": int,
+     *     "data": array
+     * }
+     */
+    public function jsonSerialize() : array
+    {
+        return [
+            'name' => $this->getName(),
+            'start' => $this->getStart(),
+            'end' => $this->getEnd(),
+            'startMemory' => $this->getStartMemory(),
+            'endMemory' => $this->getEndMemory(),
+            'data' => $this->getData()
+        ];
     }
 }

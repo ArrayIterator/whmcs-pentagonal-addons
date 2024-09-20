@@ -148,7 +148,9 @@ class DatabaseWriter implements LogWriterInterface
                 return;
             } else {
                 $disableAutoClean = Options::get(self::DISABLE_AUTO_CLEAN_OPTION_NAME);
-                $disableAutoClean = is_string($disableAutoClean) ? strtolower(trim($disableAutoClean)) : $disableAutoClean;
+                $disableAutoClean = is_string($disableAutoClean)
+                    ? strtolower(trim($disableAutoClean))
+                    : $disableAutoClean;
                 if (in_array($disableAutoClean, ['yes', '1', 'true', 'on', true, 1], true)) {
                     return;
                 }

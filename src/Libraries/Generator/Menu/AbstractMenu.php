@@ -4,8 +4,13 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Libraries\Generator\Menu;
 
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 use function array_key_exists;
+use function call_user_func;
+use function is_callable;
+use function is_object;
 use function is_string;
+use function method_exists;
 use function uasort;
 
 abstract class AbstractMenu
@@ -51,15 +56,36 @@ abstract class AbstractMenu
     private array $subMenus = [];
 
     /**
-     * AbstractMenu constructor.
-     *
-     * @param Menus $menus Menus Instance
+     * @var ?callable $callablePermission Callable Permission
      */
-    public function __construct(Menus $menus)
-    {
+    protected $callablePermission;
+
+    /**
+     * @param Menus $menus
+     * @param string $id
+     * @param array $attributes
+     * @param int $priority
+     * @param $link
+     * @param string|null $linkText
+     * @param callable|null $callablePermission
+     */
+    public function __construct(
+        Menus $menus,
+        string $id,
+        array $attributes = [],
+        int $priority = 10,
+        $link = null,
+        ?string $linkText = null,
+        ?callable $callablePermission = null
+    ) {
         $this->menus = $menus;
-        // reset
-        $this->setAttributes($this->attributes);
+        $this->id = $id;
+        $this->priority = $priority;
+        $this->attributes = $attributes;
+        $this->setLink($link)
+            ->setAttributes($attributes)
+            ->setLinkText($linkText);
+        $this->callablePermission = $callablePermission;
     }
 
     /**
@@ -70,10 +96,19 @@ abstract class AbstractMenu
         return $this->menus;
     }
 
+    /**
+     * Call Permission
+     *
+     * @param ServerRequestInterface|null $request
+     * @return bool
+     */
     public function permitted(
         ?ServerRequestInterface $request = null
     ) : bool {
-        return true;
+        $res = is_callable($this->callablePermission)
+            ? call_user_func($this->callablePermission, $request, $this)
+            : true;
+        return $res === true;
     }
 
     public function getLink()
@@ -81,9 +116,18 @@ abstract class AbstractMenu
         return $this->link;
     }
 
+    /**
+     * @param UriInterface|string|Stringable $link
+     * @return $this
+     */
     public function setLink($link) : AbstractMenu
     {
-        $this->link = $link;
+        if (is_string($link)
+            || $link instanceof UriInterface
+            || is_object($link) && method_exists($link, '__toString')
+        ) {
+            $this->link = $link;
+        }
         return $this;
     }
 
@@ -107,7 +151,7 @@ abstract class AbstractMenu
         return $this->attributes;
     }
 
-    public function setAttributes(array $attributes): void
+    public function setAttributes(array $attributes): self
     {
         $this->attributes = [];
         foreach ($attributes as $key => $item) {
@@ -115,6 +159,7 @@ abstract class AbstractMenu
                 $this->setAttribute($key, $item);
             }
         }
+        return $this;
     }
 
     public function setAttribute(string $attributeName, $attributeValue): AbstractMenu
@@ -169,6 +214,12 @@ abstract class AbstractMenu
         return $this->subMenus;
     }
 
+    /**
+     * Check if has menu
+     *
+     * @param string $menuId
+     * @return bool
+     */
     public function hasSubmenu(string $menuId) : bool
     {
         return isset($this->subMenus[$menuId]);

@@ -6,17 +6,14 @@ namespace Pentagonal\Neon\WHMCS\Addon;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
+use Pentagonal\Neon\WHMCS\Addon\Http\HttpFactory;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Schemas;
 use Throwable;
 use WHMCS\Application;
 use WHMCS\View\Template\Theme;
-use function get_class;
-use function get_object_vars;
 use function in_array;
-use function spl_object_hash;
-use function sprintf;
 use const DIRECTORY_SEPARATOR;
 
 class Core
@@ -75,6 +72,11 @@ class Core
      * @var Schemas $schemas the schemas
      */
     private Schemas $schemas;
+
+    /**
+     * @var HttpFactory $httpFactory the http-factory
+     */
+    private HttpFactory $httpFactory;
 
     /**
      * Core constructor.
@@ -166,6 +168,15 @@ class Core
         return $this->plugins ??= new Plugins($this);
     }
 
+    /**
+     * Get http factory
+     *
+     * @return HttpFactory
+     */
+    public function getHttpFactory(): HttpFactory
+    {
+        return $this->httpFactory ??= new HttpFactory();
+    }
     /**
      * Check if the core is dispatched
      *
@@ -321,21 +332,5 @@ class Core
     public function getEventManager(): EventManagerInterface
     {
         return $this->manager ??= new EventManager();
-    }
-
-    /**
-     * Debug info
-     *
-     * @return array
-     */
-    public function __debugInfo() : array
-    {
-        $object = get_object_vars($this);
-        $object['whmcs'] = sprintf('%s(%s)', get_class($object['whmcs']), spl_object_hash($object['whmcs']));
-        $object['addon'] = sprintf('%s(%s)', get_class($object['addon']), spl_object_hash($object['addon']));
-        $object['services'] = sprintf('%s(%s)', get_class($object['services']), spl_object_hash($object['services']));
-        $object['hooks'] = sprintf('%s(%s)', get_class($object['hooks']), spl_object_hash($object['hooks']));
-        $object['plugins'] = sprintf('%s(%s)', get_class($object['plugins']), spl_object_hash($object['plugins']));
-        return $object;
     }
 }

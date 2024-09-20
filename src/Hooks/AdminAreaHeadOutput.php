@@ -18,12 +18,13 @@ class AdminAreaHeadOutput extends AbstractHook
     /**
      * @var string $hooks hook name
      */
-     protected $hooks = 'AdminAreaHeadOutput';
+     protected $hooks = '';
+     // protected $hooks = 'AdminAreaHeadOutput';
 
     /**
      * @InheritDoc
      */
-    protected function dispatch($vars) : string
+    protected function dispatch($vars)
     {
         if (!is_string($vars)) {
             $vars = '';

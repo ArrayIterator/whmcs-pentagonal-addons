@@ -3,18 +3,24 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 
+use Closure;
 use InvalidArgumentException;
+use JsonSerializable;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers\GroupProfiler;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers\Profiler;
 use WHMCS\Database\Capsule;
+use function get_class;
+use function is_array;
+use function is_callable;
 use function is_object;
 use function is_string;
-use function print_r;
+use function spl_object_hash;
+use function sprintf;
 
 /**
  * Performance profiler - to record performance
  */
-final class Performance
+final class Performance implements JsonSerializable
 {
     public const DEFAULT_GROUP = 'default';
 
@@ -278,5 +284,45 @@ final class Performance
     public static function replace(GroupProfiler $groupProfiler): GroupProfiler
     {
         return self::getInstance()->replaceGroup($groupProfiler);
+    }
+
+    public function jsonSerialize() : array
+    {
+        $profilers = [];
+        foreach ($this->getGroups() as $group) {
+            foreach ($group->getProfilers() as $profiler) {
+                $profiler = ['group' => $group->getName()] + $profiler->jsonSerialize();
+                ;
+                $profiler = DataNormalizer::protectRootDir($profiler);
+                if (isset($profiler['data']) && is_array($profiler['data'])) {
+                    foreach ($profiler['data'] as $key => $v) {
+                        if (!is_callable($v) || is_string($v)) {
+                            continue;
+                        }
+                        if (is_object($v)) {
+                            $profiler['data'][$key] = sprintf('(object:%s)', get_class($v));
+                            continue;
+                        }
+                        if (is_array($v)) {
+                            $callback = reset($v);
+                            $_key = key($v);
+                            if (is_object($callback)) {
+                                $v[$_key] = sprintf('%s(%s)', get_class($callback), spl_object_hash($callback));
+                            }
+                            $profiler['data'][$key] = $v;
+                            continue;
+                        }
+                        if ($v instanceof Closure) {
+                            $profiler['data'][$key] = 'Closure@'.spl_object_hash($v);
+                        }
+                    }
+                }
+                $profilers[] = $profiler;
+            }
+        }
+        usort($profilers, function ($a, $b) {
+            return $a['start'] <=> $b['start'];
+        });
+        return $profilers;
     }
 }

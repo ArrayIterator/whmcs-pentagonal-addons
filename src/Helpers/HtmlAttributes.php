@@ -296,6 +296,7 @@ class HtmlAttributes
      *
      * @param array $attributes
      * @return array<string>
+     * @noinspection PhpConditionAlreadyCheckedInspection
      */
     public static function buildAttributesArray(array $attributes): array
     {
@@ -328,7 +329,7 @@ class HtmlAttributes
                     || is_scalar($value)
                 ) {
                     $value = (string)$value;
-                } /** @noinspection PhpConditionAlreadyCheckedInspection */ elseif ($value instanceof JsonSerializable) {
+                } elseif ($value instanceof JsonSerializable) {
                     $value = json_encode($value, JSON_UNESCAPED_SLASHES);
                 } elseif ($value === null) {
                     // null is true
