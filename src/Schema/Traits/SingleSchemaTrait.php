@@ -3,16 +3,13 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Traits;
 
-use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Abstracts\AbstractStructure;
-use Swaggest\JsonSchema\InvalidValue;
 use Throwable;
 use function is_array;
 use function is_bool;
 use function is_subclass_of;
 use function json_decode;
 use function json_encode;
-use function sprintf;
 
 trait SingleSchemaTrait
 {
@@ -84,46 +81,19 @@ trait SingleSchemaTrait
             if (!$this->schema) {
                 return null;
             }
-            if (is_bool($this->valid??null)) {
-                return $this->schema;
-            }
-            $className = $this->getSchemaClassName();
-            if (!$className || !is_subclass_of($className, AbstractStructure::class, true)) {
-                return null;
-            }
-            return $this->schema instanceof $className ? $this->schema : null;
+            return $this->valid ? $this->schema : null;
         }
         $this->schemaInit = true;
         $this->schema = null;
         $this->valid = false;
-        $refSchema = $this->getRefSchema();
-        if (!$refSchema) {
-            return null;
-        }
-        $className = $this->getSchemaClassName();
-        if (!is_subclass_of($className, AbstractStructure::class)) {
-            $this->error = new InvalidValue(sprintf('Invalid Schema Class: %s', $className));
-            return null;
-        }
-        $performance = Performance::profile('validate_schema', static::class);
         try {
-            $schemaObject = $this->readJson($this->getSchemaFile());
-            $schema = $className::import($schemaObject);
-            $this->valid = $schema instanceof AbstractStructure;
-            $this->schema = null;
-            if (!$this->valid) {
-                $this->error = new InvalidValue('Invalid Schema');
-                return null;
-            }
-            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
-            $refSchema->in(json_decode(json_encode($schema)));
-            $this->schema = $schema;
+            $this->schema = $this->createSchemaStructureFor($this->getSchemaFile(), $this->getSchemaClassName());
+            $this->valid = true;
+            return $this->schema;
         } catch (Throwable $e) {
             $this->error = $e;
-        } finally {
-            $performance->stop();
+            return null;
         }
-        return $this->schema;
     }
 
     /**

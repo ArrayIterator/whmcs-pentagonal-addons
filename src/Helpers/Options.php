@@ -223,7 +223,7 @@ final class Options
      */
     protected function getOption(string $name, &$exist = null)
     {
-        $performance = Performance::profile('options_get', self::class)
+        $performance = Performance::profile('options_get', 'system.options')
             ->setDataValue('name', $name);
         try {
             $key = $this->initialize()->normalizeOptionName($name);

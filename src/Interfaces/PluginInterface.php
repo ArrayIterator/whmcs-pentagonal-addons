@@ -3,39 +3,47 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Interfaces;
 
+use Pentagonal\Neon\WHMCS\Addon\Plugins;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
+use Throwable;
 
 interface PluginInterface
 {
     /**
      * PluginInterface constructor.
-     * @param string $pluginDirectory The plugin directory
+     * @param Plugins $plugins
+     * @param Plugin $schema
+     * @throw RuntimeException if schema namespace not equal plugin namespace
      */
-    public function __construct(string $pluginDirectory);
+    public function __construct(Plugins $plugins, Plugin $schema);
 
     /**
-     * @return ?Plugin The schema of the plugin, return null if invalid
-     */
-    public function getSchema(): ?Plugin;
-
-    /**
-     * Get the plugin directory
+     * Get plugin schema
      *
-     * @return string The plugin directory
+     * @return ?Plugin
      */
-    public function getPluginDirectory(): string;
+    public function getSchema() : Plugin;
 
     /**
-     * @return string|null The plugin file
-     */
-    public function getPluginFile(): ?string;
-
-    /**
-     * Check if the plugin is valid
+     * Get load error
      *
-     * @return bool The plugin is valid
+     * @return ?Throwable
      */
-    public function isValid() : bool;
+    public function getLoadError(): ?Throwable;
+
+    /**
+     * Get plugins
+     *
+     * @return Plugins
+     */
+    public function getPlugins(): Plugins;
+
+    /**
+     * Check if plugin loaded
+     *
+     * @return bool
+     */
+    public function isLoaded() : bool;
 
     /**
      * Load the plugin

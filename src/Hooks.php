@@ -9,7 +9,7 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaHeadOutput;
-use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaMenuButton;
+use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaHook;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\ThemeSetting;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\VersionHook;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\HookDispatcherInterface;
@@ -58,7 +58,7 @@ final class Hooks implements HooksInterface
         VersionHook::class,
         ThemeSetting::class,
         AdminAreaHeadOutput::class,
-        AdminAreaMenuButton::class,
+        AdminAreaHook::class,
     ];
 
     /**
@@ -314,7 +314,7 @@ final class Hooks implements HooksInterface
         }
         $this->inQueue = true;
         $stopCode = Random::bytes();
-        $performance = Performance::profile('hooks_run', Hooks::class)
+        $performance = Performance::profile('hooks_run', 'system.hooks')
             ->setStopCode($stopCode);
         try {
             while (count($this->queue) > 0) {
@@ -330,7 +330,7 @@ final class Hooks implements HooksInterface
                     $this->dispatched[$className][$hookName] = true;
                     $this->getDispatcher()->add($hookName, static function ($vars) use ($hook, $stopCode, $hookName) {
                         $vars = is_array($vars) ? $vars : [];
-                        $performance = Performance::profile('hook_run', Hooks::class)
+                        $performance = Performance::profile('hook_run', 'system.hooks')
                             ->setStopCode($stopCode)
                             ->setData([
                                 'hook' => $hook->getName(),
@@ -361,10 +361,11 @@ final class Hooks implements HooksInterface
         if ($this->initialized) {
             return;
         }
+
         $this->initialized = true;
         $em = $this->getCore()->getEventManager();
         $stopCode = Random::bytes();
-        $performance = Performance::profile('hooks_init', Hooks::class)
+        $performance = Performance::profile('hooks_init', 'system.hooks')
             ->setStopCode($stopCode);
         try {
             try {
@@ -388,7 +389,7 @@ final class Hooks implements HooksInterface
             if (!$hooksFile || !file_exists($hooksFile)) {
                 return;
             }
-            $includePerformance = Performance::profile('hooks_init_include', Hooks::class)
+            $includePerformance = Performance::profile('hooks_init_include', 'system.hooks')
             ->setStopCode($stopCode)
             ->setData([
                 'file' => $hooksFile

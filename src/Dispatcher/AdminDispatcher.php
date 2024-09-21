@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Dispatcher;
 
 use Pentagonal\Neon\WHMCS\Addon\Addon;
+use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Handlers\DispatcherResponse;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherResponseInterface;
 use Pentagonal\Neon\WHMCS\Addon\Extended\AdminLanguage;
@@ -18,11 +19,9 @@ use Pentagonal\Neon\WHMCS\Addon\Http\Code;
 use Pentagonal\Neon\WHMCS\Addon\Http\ResponseEmitter;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\Generator\Menu\Menus;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\SmartyAdmin;
-use Pentagonal\Neon\WHMCS\Addon\Services\AdminService;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use Throwable;
-use WHMCS\Admin;
 use function array_key_exists;
 use function array_shift;
 use function header;
@@ -39,7 +38,6 @@ use function ob_get_length;
 use function ob_get_level;
 use function ob_start;
 use function preg_match;
-use function sprintf;
 use function strtolower;
 use function trim;
 use const JSON_PRETTY_PRINT;
@@ -91,24 +89,19 @@ class AdminDispatcher
     public const EVENT_ADMIN_OUTPUT_API_RESPONSE = 'AdminDispatcherOutputAPIResponse';
 
     /**
+     * @var Core $core the core
+     */
+    protected Core $core;
+
+    /**
      * @var SmartyAdmin $smarty the smarty object
      */
     protected SmartyAdmin $smarty;
 
     /**
-     * @var AdminService $adminService the admin service
-     */
-    protected AdminService $adminService;
-
-    /**
      * @var AdminDispatcherHandler $handler the handler
      */
     protected AdminDispatcherHandler $handler;
-
-    /**
-     * @var ?Admin|false $adminObject the admin object
-     */
-    protected $adminObject = null;
 
     /**
      * @var bool $dispatched the dispatched
@@ -140,12 +133,20 @@ class AdminDispatcher
      */
     private Menus $leftMenu;
 
-    /**
-     * @param AdminService $adminService the admin service
-     */
-    public function __construct(AdminService $adminService)
+
+    public function __construct(Core $core)
     {
-        $this->adminService = $adminService;
+        $this->core = $core;
+    }
+
+    /**
+     * Get core
+     *
+     * @return Core
+     */
+    public function getCore(): Core
+    {
+        return $this->core;
     }
 
     /**
@@ -186,7 +187,7 @@ class AdminDispatcher
     public function getTopMenu(): Menus
     {
         return $this->topMenu ??= new Menus(
-            $this->getAdminService()->getServices()->getEventManager()
+            $this->getCore()
         );
     }
 
@@ -198,7 +199,7 @@ class AdminDispatcher
     public function getLeftMenu(): Menus
     {
         return $this->leftMenu ??= new Menus(
-            $this->getAdminService()->getServices()->getEventManager()
+            $this->getCore()
         );
     }
 
@@ -246,34 +247,6 @@ class AdminDispatcher
     }
 
     /**
-     * Get the admin object
-     *
-     * @return ?Admin
-     */
-    public function getAdminObject(): ?Admin
-    {
-        if ($this->adminObject === null) {
-            $this->adminObject = false;
-            foreach ($GLOBALS as $value) {
-                if ($value instanceof Admin) {
-                    $this->adminObject = $value;
-                    return $value;
-                }
-            }
-        }
-
-        return $this->adminObject ?: null;
-    }
-
-    /**
-     * @return AdminService
-     */
-    public function getAdminService(): AdminService
-    {
-        return $this->adminService;
-    }
-
-    /**
      * Get the smarty object
      *
      * @return SmartyAdmin
@@ -281,7 +254,8 @@ class AdminDispatcher
     public function getSmarty(): SmartyAdmin
     {
         return $this->smarty ??= new SmartyAdmin(
-            $this->getAdminService()->getServices()->getCore()->getAddon()->getAddonDirectory() . '/templates'
+            $this->getCore(),
+            $this->getCore()->getAddon()->getAddonDirectory() . '/templates'
         );
     }
 
@@ -292,20 +266,12 @@ class AdminDispatcher
      */
     public function dispatch()
     {
-        $service = $this->getAdminService()->getServices();
-        if ($this->dispatched
-            || !$service->getCore()->isAdminAreaRequest()
-        ) {
+        // stop if dispatched or is not addon page
+        if ($this->isDispatched() || ! $this->getCore()->getAddon()->isAddonPage()) {
             return;
         }
         $this->dispatched = true;
-
-        // don't process if not addon page
-        if (!$this->getAdminService()->getServices()->getCore()->getAddon()->isAddonPage()) {
-            return;
-        }
-        $em = $service->getEventManager();
-        $em->attach(Addon::EVENT_ADDON_ADMIN_OUTPUT, [$this, 'render'], true);
+        $this->getCore()->getEventManager()->attach(Addon::EVENT_ADDON_ADMIN_OUTPUT, [$this, 'render'], true);
     }
 
     /**
@@ -318,7 +284,7 @@ class AdminDispatcher
     private function processApi($response, $error)
     {
         $stopCode = Random::bytes();
-        $performance = Performance::profile('admin_output_api', AdminDispatcher::class)
+        $performance = Performance::profile('admin_output_api', 'system.admin_dispatcher')
             ->setStopCode($stopCode);
         $count = 0;
         // clear output buffer
@@ -331,7 +297,7 @@ class AdminDispatcher
         }
         $is_debug_part = ApplicationConfig::get('display_errors') === true;
         $is_debug = $is_debug_part;
-        $em = $this->getAdminService()->getServices()->getEventManager();
+        $em = $this->getCore()->getEventManager();
         try {
             $is_debug = $em->apply(self::EVENT_ADMIN_OUTPUT_DEBUG_API, $is_debug);
         } catch (Throwable $e) {
@@ -376,8 +342,6 @@ class AdminDispatcher
                     $body->rewind();
                 } else {
                     $body = $this
-                        ->getAdminService()
-                        ->getServices()
                         ->getCore()
                         ->getHttpFactory()
                         ->getStreamFactory()
@@ -414,15 +378,13 @@ class AdminDispatcher
     private function emitDataJsonData(int $code, $data, int $jsonOption, Profiler $profiler, string $stopCode)
     {
         $response = $data instanceof ResponseInterface ? $data : $this
-            ->getAdminService()
-            ->getServices()
             ->getCore()
             ->getHttpFactory()
             ->getResponseFactory()
             ->createResponse($code)
             ->withHeader('Content-Type', 'application/json');
         $response->getBody()->write(json_encode($data, $jsonOption));
-        $em = $this->getAdminService()->getServices()->getEventManager();
+        $em = $this->getCore()->getEventManager();
         try {
             $newResponse = $em->apply(self::EVENT_ADMIN_OUTPUT_API_RESPONSE, $response);
             $response = $newResponse instanceof ResponseInterface ? $newResponse : $response;
@@ -492,7 +454,7 @@ class AdminDispatcher
             'code' => $code
         ], $stopCode);
         ob_start();
-        $em = $this->getAdminService()->getServices()->getEventManager();
+        $em = $this->getCore()->getEventManager();
         try {
             $newContent = $em->apply(self::EVENT_ADMIN_OUTPUT_API_DATA, $content, $code);
             if (!is_array($content)
@@ -557,7 +519,7 @@ class AdminDispatcher
             'data' => $response['data'],
             'code' => $response['code']
         ], $stopCode);
-        $em = $this->getAdminService()->getServices()->getEventManager();
+        $em = $this->getCore()->getEventManager();
         try {
             $newData = $em->apply(self::EVENT_ADMIN_OUTPUT_API_DATA, $response, $response['code']);
             if (!is_array($newData)
@@ -599,7 +561,7 @@ class AdminDispatcher
             return;
         }
 
-        $em = $this->getAdminService()->getServices()->getEventManager();
+        $em = $this->getCore()->getEventManager();
         if (!$em->is(Addon::EVENT_ADDON_ADMIN_OUTPUT, [$this, 'render'])) {
             return;
         }
@@ -608,13 +570,14 @@ class AdminDispatcher
             return;
         }
         $this->rendered = true;
-        $admin = $this->getAdminObject();
-        if ($admin === null || ! $this->getAdminService()->isAllowedAccessAddonPage()) {
+        $admin = $this->getCore()->getWhmcsAdmin();
+        if (!$admin|| ! $this->getCore()->getAddon()->isAllowedAccessAddonPage()) {
             return;
         }
         $stopCode = Random::bytes();
-        $performance = Performance::profile('admin_output', AdminDispatcher::class)
+        $performance = Performance::profile('admin_output', 'system.admin_dispatcher')
             ->setStopCode($stopCode);
+
         try {
             $em->apply(self::EVENT_ADMIN_OUTPUT_BEFORE_RENDER, $vars);
         } catch (Throwable $e) {
@@ -628,6 +591,7 @@ class AdminDispatcher
             );
         }
 
+        $html = [];
         // disable sidebar
         $admin->sidebar = '';
         $error = null;
@@ -653,7 +617,7 @@ class AdminDispatcher
         ob_start();
 
         // start wrapper
-        $html = ['<div id="pentagonal-addon-section" class="pentagonal-addon-section pentagonal-addon-wait">'];
+        $html[] = '<div id="pentagonal-addon-section" class="pentagonal-addon-section pentagonal-addon-wait">';
         $please_wait = AdminLanguage::lang('Please wait...');
         $html[] = (<<<HTML
 <div class="pentagonal-addon-wait-loader">
@@ -744,8 +708,15 @@ HTML);
         $html[] = ('</div>');
         if (ob_get_length() > 0 || $level < ob_get_level()) {
             ob_end_clean();
+            if ($level > ob_get_level()) {
+                ob_start();
+            }
         }
-        $performance->stop([], $stopCode);
+
+        while (count($html) > 0) {
+            echo array_shift($html) . "\n";
+        }
+        unset($html);
         try {
             $em->apply(self::EVENT_ADMIN_OUTPUT_AFTER_RENDER, $vars);
         } catch (Throwable $e) {
@@ -758,15 +729,6 @@ HTML);
                 ]
             );
         }
-        if (Performance::getInstance()->isEnabled()) {
-            $html[] = sprintf(
-                '<script type="application/json" id="pentagonal-performance-profiler">%s</script>',
-                json_encode(Performance::getInstance(), JSON_UNESCAPED_SLASHES)
-            );
-        }
-        while (count($html) > 0) {
-            echo array_shift($html) . "\n";
-        }
-        unset($html);
+        $performance->stop([], $stopCode);
     }
 }

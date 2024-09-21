@@ -94,7 +94,7 @@ class DatabaseWriter implements LogWriterInterface
             return;
         }
         $this->initialized = true;
-        $performance = Performance::profile('init', self::class);
+        $performance = Performance::profile('init', 'system.database_writer');
         try {
             // do something
             if (!Capsule::schema()->hasTable(self::TABLE_NAME)) {
@@ -216,7 +216,7 @@ class DatabaseWriter implements LogWriterInterface
         if (empty($this->queue)) {
             return;
         }
-        $performance = Performance::profile('save', self::class)
+        $performance = Performance::profile('save', 'system.database_writer')
             ->setData([
                 'queue' => count($this->queue),
             ]);

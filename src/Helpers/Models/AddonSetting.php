@@ -18,7 +18,7 @@ final class AddonSetting
      */
     public static function find(string $moduleName, string $setting) : ?Setting
     {
-        $performance = Performance::profile('find', self::class, [
+        $performance = Performance::profile('find', 'system.addon_setting', [
             'module' => $moduleName,
             'setting' => $setting,
         ]);
@@ -43,7 +43,7 @@ final class AddonSetting
      */
     public static function save(string $moduleName, string $setting, $value) : bool
     {
-        $performance = Performance::profile('save', self::class, [
+        $performance = Performance::profile('save', 'system.addon_setting', [
             'module' => $moduleName,
             'setting' => $setting,
             'value' => $value,

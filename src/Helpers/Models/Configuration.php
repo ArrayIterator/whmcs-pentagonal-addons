@@ -17,7 +17,7 @@ class Configuration
      */
     public static function find(string $setting) : ?Setting
     {
-        $performance = Performance::profile('find', self::class, [
+        $performance = Performance::profile('find', 'system.configuration_model', [
             'setting' => $setting,
         ]);
         try {
@@ -39,7 +39,7 @@ class Configuration
      */
     public static function save(string $setting, $value) : bool
     {
-        $performance = Performance::profile('save', self::class, [
+        $performance = Performance::profile('save', 'system.configuration_model', [
             'setting' => $setting,
             'value' => $value,
         ]);

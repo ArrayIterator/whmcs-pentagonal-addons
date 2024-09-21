@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Libraries;
 
 use Exception;
+use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\ApplicationConfig;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
-use Pentagonal\Neon\WHMCS\Addon\Helpers\URL;
 use Smarty;
 use SmartyBC;
 use Throwable;
@@ -17,11 +17,18 @@ use const SMARTY_MBSTRING;
 
 class SmartyAdmin extends SmartyBC
 {
+
+    /**
+     * @var Core $core the core
+     */
+    private Core $core;
+
     /**
      * @param string $templateDir Template Directory
      */
-    public function __construct(string $templateDir)
+    public function __construct(Core $core, string $templateDir)
     {
+        $this->core = $core;
         self::$_MBSTRING = SMARTY_MBSTRING && function_exists("mb_split");
         parent::__construct();
 
@@ -35,31 +42,40 @@ class SmartyAdmin extends SmartyBC
     }
 
     /**
+     * @return Core
+     */
+    public function getCore(): Core
+    {
+        return $this->core;
+    }
+
+    /**
      * Assign Default Variables
      *
      * @return void
      */
     protected function assignDefault()
     {
+        $url = $this->getCore()->getUrl();
         $this->assign([
-            'addon_url' => URL::addonUrl(),
-            'addons_url' => URL::addOnsURL(),
-            'admin_url' => URL::adminUrl(),
-            'base_url' => URL::baseUrl(),
-            'theme_url' => URL::themeUrl(),
-            'templates_url' => URL::templatesUrl(),
-            'asset_url' => URL::assetUrl(),
-            'module_url' => URL::moduleURL(),
+            'addon_url' => $url->getAddonUrl(),
+            'addons_url' => $url->getAddOnsURL(),
+            'admin_url' => $url->getAdminUrl(),
+            'base_url' => $url->getBaseUrl(),
+            'theme_url' => $url->getThemeUrl(),
+            'templates_url' => $url->getTemplatesUrl(),
+            'asset_url' => $url->getAssetUrl(),
+            'modules_url' => $url->getModulesURL(),
         ]);
         $functions = [
-            'addon_url' => [URL::class, 'addonUrl'],
-            'addons_url' => [URL::class, 'addOnsURL'],
-            'admin_url' => [URL::class, 'adminUrl'],
-            'base_url' => [URL::class, 'baseUrl'],
-            'theme_url' => [URL::class, 'themeUrl'],
-            'templates_url' => [URL::class, 'templatesUrl'],
-            'asset_url' => [URL::class, 'assetUrl'],
-            'module_url' => [URL::class, 'moduleURL'],
+            'addon_url' => [$url, 'getAddonUrl'],
+            'addons_url' => [$url, 'getAddOnsURL'],
+            'admin_url' => [$url, 'getAdminUrl'],
+            'base_url' => [$url, 'getBaseUrl'],
+            'theme_url' => [$url, 'getThemeUrl'],
+            'templates_url' => [$url, 'getTemplatesUrl'],
+            'asset_url' => [$url, 'getAssetUrl'],
+            'modules_url' => [$url, 'getModulesURL'],
         ];
         foreach ($functions as $name => $callback) {
             try {

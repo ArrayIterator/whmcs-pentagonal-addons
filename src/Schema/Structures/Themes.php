@@ -146,28 +146,28 @@ class Themes extends AbstractStructure
             ->addPropertyMapping(Schema::PROP_ID, 'id');
 
         $properties->schema = Schema::string()
-            //->setFormat(Format::URI) // disabled to allow path
+            //->setFormat(Format::URI_REFERENCE) // disabled to allow path
             ->setDescription('The schema uri of the theme');
         $properties->id = Schema::string()
             ->setDescription('The id of the theme schema')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->name = Schema::string()
             ->setDescription('The name of the theme');
         $properties->version = Schema::string()
             ->setDescription('The version of the theme');
         $properties->url = Schema::string()
             ->setDescription('The url of the theme')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->author = Schema::string()
             ->setDescription('The author of the theme');
         $properties->author_url = Schema::string()
             ->setDescription('The author url of the theme')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->license = Schema::string()
             ->setDescription('The license of the theme');
         $properties->license_url = Schema::string()
             ->setDescription('The license url of the theme')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->date = Schema::string()
             ->setDescription('The date of created of the theme')
             ->setFormat(Format::DATE_TIME);

@@ -3,69 +3,24 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces;
 
+use Pentagonal\Neon\WHMCS\Addon\Interfaces\PluginInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 
 interface PluginSchemaInterface extends JsonSchemaInterface
 {
     /**
-     * @param SchemasInterface $schemas
-     * @param array<string> $pluginsDirectories
-     */
-    public function __construct(SchemasInterface $schemas, string ...$pluginsDirectories);
-
-    /**
-     * Remove plugin directory
+     * Get schema from given plugin directory
      *
      * @param string $pluginDirectory
-     * @return void
+     * @return Plugin
      */
-    public function removePluginDirectory(string $pluginDirectory): void;
+    public function getSchemaPlugin(string $pluginDirectory) : Plugin;
 
     /**
-     * @param string $pluginDirectory
-     * @return void
-     */
-    public function addPluginsDirectory(string $pluginDirectory): void;
-
-    /**
-     * @return array<string>
-     */
-    public function getPluginDirectories(): array;
-
-    /**
-     * @return array<Plugin>
-     */
-    public function getSchemaList(): array;
-
-    /**
-     * Set plugin active
+     * Get schema from given plugin
      *
-     * @param Plugin $plugin
-     * @return bool true if success
+     * @param PluginInterface $plugin
+     * @return ?Plugin
      */
-    public function setActive(Plugin $plugin) : bool;
-
-    /**
-     * Set plugin inactive
-     *
-     * @param Plugin $plugin
-     * @return bool
-     */
-    public function setInactive(Plugin $plugin) : bool;
-
-    /**
-     * Check if plugin is active
-     *
-     * @param Plugin $plugin
-     * @return bool
-     */
-    public function isActive(Plugin $plugin) : bool;
-
-    /**
-     * Load plugin
-     *
-     * @param Plugin $plugin
-     * @return bool
-     */
-    public function loadPlugin(Plugin $plugin) : bool;
+    public function getSchema(PluginInterface $plugin): ?Plugin;
 }

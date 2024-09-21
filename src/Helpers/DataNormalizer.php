@@ -12,6 +12,7 @@ use function is_array;
 use function is_object;
 use function is_string;
 use function preg_quote;
+use function preg_replace;
 use function realpath;
 use function str_contains;
 use function str_replace;
@@ -254,5 +255,16 @@ class DataNormalizer
         }
         self::$rootDirQuoted ??= realpath(ROOTDIR)?:ROOTDIR;
         return str_replace(self::$rootDirQuoted, $replacement, $data);
+    }
+
+    /**
+     * Make separator unix
+     *
+     * @param string $path
+     * @return string
+     */
+    public static function makeUnixSeparator(string $path) : string
+    {
+        return preg_replace('~[\\\/]+~', '/', $path);
     }
 }

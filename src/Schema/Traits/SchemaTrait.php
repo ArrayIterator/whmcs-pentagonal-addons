@@ -4,12 +4,15 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Traits;
 
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Schema\Abstracts\AbstractStructure;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\SchemasInterface;
+use Swaggest\JsonSchema\Context;
 use Swaggest\JsonSchema\InvalidValue;
 use Swaggest\JsonSchema\Schema;
-use Swaggest\JsonSchema\SchemaContract;
+use Swaggest\JsonSchema\Structure\ClassStructure;
 use Swaggest\JsonSchema\Structure\ObjectItemContract;
 use Throwable;
+use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function filemtime;
@@ -22,6 +25,7 @@ use function json_decode;
 use function mkdir;
 use function pathinfo;
 use function preg_match;
+use function realpath;
 use function restore_error_handler;
 use function set_error_handler;
 use function sha1;
@@ -86,24 +90,25 @@ trait SchemaTrait
     abstract public function getRefSchemaFile(): string;
 
     /**
+     * @template T of ObjectItemContract
      * Create schema from file
      *
      * @param string $file
-     * @param string $className
-     * @return SchemaContract|null
+     * @param class-string<T> $className
+     * @return ?T
      * @throws InvalidValue
      * @throws Throwable
      */
-    public function createSchemaFromFile(string $file, string $className = Schema::class): ?SchemaContract
+    public function createSchemaFromFile(string $file, string $className = Schema::class): ?ObjectItemContract
     {
-        $performance = Performance::profile('create_schema_from_file', static::class)
+        $performance = Performance::profile('create_schema_from_file', 'system.schema')
             ->setData([
                 'file' => $file,
                 'class' => $className,
             ]);
         try {
             /** @noinspection PhpRedundantOptionalArgumentInspection */
-            if ($className === Schema::class || is_subclass_of($className, Schema::class, true)) {
+            if ($className === Schema::class || is_subclass_of($className, ClassStructure::class, true)) {
                 return $className::import($this->readJson($file));
             }
             throw new InvalidValue(sprintf('Invalid Schema Class: %s', $className), E_USER_WARNING);
@@ -119,7 +124,7 @@ trait SchemaTrait
      */
     protected function readJson(string $file) : ?object
     {
-        $performance = Performance::profile('read_json', static::class)
+        $performance = Performance::profile('read_json', 'system.schema')
             ->setData([
                 'file' => $file,
             ]);
@@ -149,7 +154,7 @@ trait SchemaTrait
                     $file = $remoteFile;
                 }
             }
-            $readPerformance = Performance::profile('read_json_file', static::class)
+            $readPerformance = Performance::profile('read_json_file', 'system.schema')
                 ->setData([
                     'file' => $file,
                     'original_file' => $originalFile,
@@ -174,12 +179,56 @@ trait SchemaTrait
 
             $json = json_decode($content, false);
             if (!is_object($json)) {
-                throw new InvalidValue('Invalid JSON Schema', E_USER_WARNING);
+                throw new InvalidValue(sprintf('Invalid JSON Schema: %s', $content), E_USER_WARNING);
             }
         } finally {
             $performance->stop();
         }
         return $json;
+    }
+
+    /**
+     * Create schema
+     *
+     * @template T of AbstractStructure
+     * Get schema from file
+     * @param string $file the file of json
+     * @param class-string<T> $className the classname structure
+     * @throws Throwable
+     * @return T
+     */
+    public function createSchemaStructureFor(string $file, string $className) : ?AbstractStructure
+    {
+        if (!file_exists($file)) {
+            return null;
+        }
+        $file = realpath($file)?:$file;
+        $refSchema = $this->getRefSchema();
+        if (!$refSchema) {
+            return null;
+        }
+        if (!is_subclass_of($className, AbstractStructure::class)) {
+            throw new InvalidValue(sprintf('Invalid Schema Class: %s', $className));
+        }
+        $performance = Performance::profile('validate_schema', 'system.schema')
+            ->setData([
+                'file' => $file,
+                'class' => $className
+            ]);
+        try {
+            $schema = $this->createSchemaFromFile($file, $className);
+            if (!$schema instanceof AbstractStructure || ! $schema instanceof $className) {
+                throw new InvalidValue('Invalid Schema');
+            }
+            $context = new Context();
+            $context->skipValidation = true;
+            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
+            $refSchema->in($schema->jsonSerialize(), $context);
+            $this->schema = $schema;
+        } finally {
+            $performance->stop();
+        }
+        return $schema;
     }
 
     /**

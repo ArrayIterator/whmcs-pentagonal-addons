@@ -114,7 +114,7 @@ class EventManager implements EventManagerInterface
             return $param;
         }
         $stopCode = Random::bytes();
-        $performance = Performance::profile('apply', __CLASS__)
+        $performance = Performance::profile('apply', 'system.event_manager')
             ->setStopCode($stopCode)
             ->setData([
                 'event' => $name
@@ -150,7 +150,7 @@ class EventManager implements EventManagerInterface
                 }
                 $this->current = [$name, $callback];
                 $this->processing[$name][$index] = $callback;
-                $applyPerformance = Performance::profile('apply_call', __CLASS__)
+                $applyPerformance = Performance::profile('apply_call', 'system.event_manager')
                     ->setStopCode($stopCode)
                     ->setData([
                         'event' => $name,
@@ -208,7 +208,7 @@ class EventManager implements EventManagerInterface
      */
     public function detach(string $name, ?callable $eventCallback = null): int
     {
-        $performance = Performance::profile('detach', __CLASS__)
+        $performance = Performance::profile('detach', 'system.event_manager')
             ->setData([
                 'event' => $name,
                 'callback' => $eventCallback

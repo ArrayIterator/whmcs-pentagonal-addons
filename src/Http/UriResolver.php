@@ -43,7 +43,7 @@ final class UriResolver
      *
      * @return array|false
      */
-    public static function parse(string $url) : bool|array
+    public static function parse(string $url)
     {
         // If IPv6
         $prefix = '';

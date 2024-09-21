@@ -2,9 +2,9 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://hub.pentagonal.org/schemas/options+themes.json",
     "type": "object",
-    "title": "Schema for Themes",
-    "description": "The schema",
     "version": "1.0.0",
+    "title": "Schema for Themes",
+    "description": "The schema for Themes",
     "required": [
         "name"
     ],
@@ -895,61 +895,61 @@
     },
     "properties": {
         "$schema": {
-            "description": "The schema uri of the schema",
+            "description": "The schema uri of the theme",
             "type": "string"
         },
         "$id": {
-            "description": "The id of the schema",
+            "description": "The id of the theme schema",
             "type": "string",
-            "format": "uri"
+            "format": "uri-reference"
         },
         "name": {
-            "description": "The name of the schema",
+            "description": "The name of the theme",
             "type": "string"
         },
         "version": {
-            "description": "The version of the schema",
+            "description": "The version of the theme",
             "type": "string"
         },
         "url": {
-            "description": "The url of the schema",
+            "description": "The url of the theme",
             "type": "string",
-            "format": "uri"
+            "format": "uri-reference"
         },
         "author": {
-            "description": "The author of the schema",
+            "description": "The author of the theme",
             "type": "string"
         },
         "author_url": {
-            "description": "The author url of the schema",
+            "description": "The author url of the theme",
             "type": "string",
-            "format": "uri"
+            "format": "uri-reference"
         },
         "license": {
-            "description": "The license of the schema",
+            "description": "The license of the theme",
             "type": "string"
         },
         "license_url": {
-            "description": "The license url of the schema",
+            "description": "The license url of the theme",
             "type": "string",
-            "format": "uri"
+            "format": "uri-reference"
         },
         "date": {
-            "description": "The date of created of the schema",
+            "description": "The date of created of the theme",
             "type": "string",
             "format": "date-time"
         },
         "updated": {
-            "description": "The date of updated of the schema",
+            "description": "The date of updated of the theme",
             "type": "string",
             "format": "date-time"
         },
         "description": {
-            "description": "The description of the schema",
+            "description": "The description of the theme",
             "type": "string"
         },
         "language_directory": {
-            "description": "The language directory of the schema",
+            "description": "The language directory of the theme",
             "default": "languages",
             "type": "string"
         },
@@ -964,12 +964,12 @@
             "type": "boolean"
         },
         "translate": {
-            "description": "The translatable or not of the schema",
+            "description": "The translatable or not of the theme",
             "default": true,
             "type": "boolean"
         },
         "changelog": {
-            "description": "The changelog of the schema",
+            "description": "The changelog of the theme",
             "default": [],
             "items": {
                 "additionalProperties": true,
@@ -990,13 +990,13 @@
             "type": "array"
         },
         "metadata": {
-            "description": "The metadata of the schema",
+            "description": "The metadata of the theme",
             "default": {},
             "additionalProperties": true,
             "type": "object"
         },
         "settings": {
-            "description": "The settings for the schema",
+            "description": "The settings for the theme",
             "items": {
                 "type": "object",
                 "$ref": "#/definitions/settings"

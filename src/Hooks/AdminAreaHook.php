@@ -5,7 +5,6 @@ namespace Pentagonal\Neon\WHMCS\Addon\Hooks;
 
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractHook;
 use Pentagonal\Neon\WHMCS\Addon\Addon;
-use Pentagonal\Neon\WHMCS\Addon\Helpers\URL;
 use function is_array;
 use function json_encode;
 use const JSON_UNESCAPED_SLASHES;
@@ -14,32 +13,35 @@ use const JSON_UNESCAPED_SLASHES;
  * Version Hook
  * Display the version of the addon
  */
-class AdminAreaMenuButton extends AbstractHook
+class AdminAreaHook extends AbstractHook
 {
     /**
      * @var string $hooks the hook name
      */
     protected $hooks = 'AdminAreaPage';
-    // protected $hooks = 'AdminAreaFooterOutput';
 
     /**
      * @inheritDoc
      */
     protected function dispatch($vars)
     {
+        if (!$this->getHooksService()->getCore()->getAddon()->isAllowedAccessAddonPage()) {
+            return $vars;
+        }
         $vars = !is_array($vars) ? [] : $vars;
-        $link = json_encode(URL::addonPageUrl(), JSON_UNESCAPED_SLASHES);
+        $url = $this->getHooksService()->getCore()->getUrl();
+        $link = json_encode($url->getAddonPageUrl(), JSON_UNESCAPED_SLASHES);
         $name = json_encode(Addon::ADDON_CONFIG['name'], JSON_UNESCAPED_SLASHES);
         $definitions = [
             'addon_name' => $this->getHooksService()->getCore()->getAddon()->getAddonName(),
-            'addon_url' => URL::addonUrl(),
-            'addons_url' => URL::addOnsURL(),
-            'admin_url' => URL::adminUrl(),
-            'base_url' => URL::baseUrl(),
-            'theme_url' => URL::themeUrl(),
-            'templates_url' => URL::templatesUrl(),
-            'asset_url' => URL::assetUrl(),
-            'module_url' => URL::moduleURL(),
+            'addon_url' => $url->getAddonUrl(),
+            'addons_url' => $url->getAddOnsURL(),
+            'admin_url' => $url->getAdminUrl(),
+            'base_url' => $url->getBaseUrl(),
+            'theme_url' => $url->getThemeUrl(),
+            'templates_url' => $url->getTemplatesUrl(),
+            'asset_url' => $url->getAssetUrl(),
+            'module_url' => $url->getModulesURL(),
         ];
         $definitions  = json_encode($definitions, JSON_UNESCAPED_SLASHES);
         $vars['jscode'] ??= '';

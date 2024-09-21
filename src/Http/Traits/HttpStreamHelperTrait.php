@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http\Traits;
 
-use ArrayAccess\TrayDigita\Exceptions\InvalidArgument\UnsupportedArgumentException;
+use InvalidArgumentException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Factory\StreamFactory;
 use Psr\Http\Message\StreamInterface;
 use function is_object;
@@ -14,11 +14,11 @@ trait HttpStreamHelperTrait
 {
     protected function determineBodyStream($body) : StreamInterface
     {
-        if (is_scalar($body) || is_object($body) && method_exists($body, '__tostring')) {
+        if (is_scalar($body) || is_object($body) && method_exists($body, '__toString')) {
             $body = (new StreamFactory())->createStream((string) $body);
             $body->seek(0);
         } elseif (!$body instanceof StreamInterface) {
-            throw new UnsupportedArgumentException(
+            throw new InvalidArgumentException(
                 'Invalid resource type: ' . gettype($body)
             );
         }

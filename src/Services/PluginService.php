@@ -19,11 +19,10 @@ class PluginService extends AbstractService implements RunnableServiceInterface
      */
     protected function dispatch($arg = null, ...$args)
     {
-        // to do read plugin
-        $addon = $this->getServices()->getCore()->getAddon();
-        if (!$addon->isAddonPage() || !$addon->isAllowedAccessAddonPage()) {
+        $core = $this->getServices()->getCore();
+        if (!$core->getAddon()->isAddonPage()) {
             return;
         }
-        // todo load plugin
+        $core->getPlugins()->load();
     }
 }

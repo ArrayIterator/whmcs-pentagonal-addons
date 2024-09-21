@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Extended\Traits;
 
-use Pentagonal\Neon\WHMCS\Addon\Core;
+use Pentagonal\Neon\WHMCS\Addon\Singleton;
 use Symfony\Component\Translation\Loader\PhpFileLoader;
 use Symfony\Component\Translation\Translator;
 use Throwable;
+use function dirname;
 use function file_exists;
+use function is_dir;
 use function is_string;
 use function method_exists;
 
@@ -35,7 +37,16 @@ trait LanguageTrait
             /** @noinspection PhpInternalEntityUsedInspection */
             $fallbackLocale = $app->getFallbackLocales();
             $app->addLoader(PhpFileLoader::class, new PhpFileLoader());
-            $directory = Core::factory()->getAddon()->getAddonDirectory() . '/languages';
+            $core = Singleton::core();
+            if ($core) {
+                $directory = $core->getAddon()->getAddonDirectory();
+            } else {
+                $directory = dirname(__DIR__, 3);
+            }
+            $directory .= '/languages';
+            if (!is_dir($directory)) {
+                return;
+            }
             foreach ($fallbackLocale as $locale) {
                 if (!is_string($locale)) {
                     continue;

@@ -1,18 +1,21 @@
 <?php
+/** @noinspection PhpFullyQualifiedNameUsageInspection */
 declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel;
 
+use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
+use RuntimeException;
+use Pentagonal\Neon\WHMCS\Addon\Interfaces\PluginInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\PluginSchemaInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\SchemasInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaTrait;
-use function array_map;
-use function array_search;
-use function array_unique;
-use function array_values;
+use ReflectionObject;
+use Swaggest\JsonSchema\Structure\ObjectItemContract;
+use function array_keys;
 use function dirname;
 use function file_exists;
+use function get_class;
 use function realpath;
 use const DIRECTORY_SEPARATOR;
 
@@ -23,103 +26,14 @@ class PluginSchema implements PluginSchemaInterface
     }
 
     /**
-     * @var array<string> $pluginDirectories the pluginDirectories
+     * @var array<string, Plugin>
      */
-    private array $pluginDirectories;
-
-    public function __construct(SchemasInterface $schemas, string ...$pluginsDirectories)
-    {
-        $this->pluginDirectories = array_map(static function ($dir) {
-            return realpath($dir)?:$dir;
-        }, $pluginsDirectories);
-        $this->pluginDirectories  = array_values(array_unique($this->pluginDirectories));
-        $this->construct($schemas);
-    }
+    private static array $schemaLists = [];
 
     /**
-     * @inheritDoc
+     * @var array<class-string<PluginInterface>, string>
      */
-    public function removePluginDirectory(string $pluginDirectory): void
-    {
-        $pluginDirectory = realpath($pluginDirectory)?:$pluginDirectory;
-        $key = array_search($pluginDirectory, $this->getPluginDirectories());
-        if ($key !== false) {
-            unset($this->pluginDirectories[$key]);
-            $this->pluginDirectories = array_values($this->pluginDirectories);
-        }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function addPluginsDirectory(string $pluginDirectory): void
-    {
-        $pluginDirectory = realpath($pluginDirectory)?:$pluginDirectory;
-        $this->removePluginDirectory($pluginDirectory);
-        $this->pluginDirectories[] = $pluginDirectory;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getPluginDirectories(): array
-    {
-        return $this->pluginDirectories;
-    }
-
-    /**
-     * @inheritDoc
-     */
-
-    public function getSchemaFile(): string
-    {
-        // TODO: Implement getSchemaFile() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-
-    public function getSchemaList(): array
-    {
-        // TODO: Implement getSchemaList() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-
-    public function setActive(Plugin $plugin): bool
-    {
-        // TODO: Implement setActive() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-
-    public function setInactive(Plugin $plugin): bool
-    {
-        // TODO: Implement setInactive() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-
-    public function isActive(Plugin $plugin): bool
-    {
-        // TODO: Implement isActive() method.
-    }
-
-    /**
-     * @inheritDoc
-     */
-
-    public function loadPlugin(Plugin $plugin): bool
-    {
-        // TODO: Implement loadPlugin() method.
-    }
+    protected static array $pluginJsonPath = [];
 
     /**
      * @inheritDoc
@@ -136,9 +50,67 @@ class PluginSchema implements PluginSchemaInterface
     /**
      * @inheritDoc
      */
+    public function getRefSchema(): ?ObjectItemContract
+    {
+        return $this->refSchema ??= Plugin::schema()->exportSchema();
+    }
+
+    /**
+     * @inheritDoc
+     */
 
     public function jsonSerialize()
     {
-        // todo: Implement jsonSerialize() method.
+        // nothing
+        return array_keys(self::$schemaLists);
+    }
+
+    /**
+     * GHet schema from plugin directory
+     *
+     * @param string $pluginDirectory
+     * @return Plugin
+     * @throws \Throwable
+     */
+    public function getSchemaPlugin(string $pluginDirectory) : Plugin
+    {
+        $schemaFile = DataNormalizer::makeUnixSeparator($pluginDirectory .'/plugin.json');
+        if (isset(self::$schemaLists[$schemaFile])) {
+            return clone self::$schemaLists[$schemaFile];
+        }
+        if (!file_exists($schemaFile)) {
+            throw new RuntimeException(
+                'Schema file plugin.json does not exists'
+            );
+        }
+        self::$schemaLists[$schemaFile] = $this->createSchemaStructureFor($schemaFile, Plugin::class);
+        return clone self::$schemaLists[$schemaFile];
+    }
+
+    /**
+     * @throws \Throwable
+     */
+    public function getSchema(PluginInterface $plugin): Plugin
+    {
+        $className = get_class($plugin);
+        if (isset(self::$pluginJsonPath[$className])) {
+            return $this->getSchemaPlugin(dirname(self::$pluginJsonPath[$className]));
+        }
+        $ref = new ReflectionObject($plugin);
+        if ($ref->isAnonymous()) {
+            throw new RuntimeException('Schema does not accept anonymous class');
+        }
+        $path = $ref->getFileName();
+        if (!$path) {
+            throw new RuntimeException(
+                sprintf('Plugin object: %s does not have path', $className)
+            );
+        }
+        $schemaFile = DataNormalizer::makeUnixSeparator($path .'/plugin.json');
+        self::$pluginJsonPath[$className] = $schemaFile;
+        if (isset(self::$schemaLists[$schemaFile])) {
+            return clone self::$schemaLists[$schemaFile];
+        }
+        return $this->getSchemaPlugin($path);
     }
 }

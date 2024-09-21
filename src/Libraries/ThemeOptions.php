@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Libraries;
 
+use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Options;
 use function is_array;
 use function preg_replace;
@@ -28,13 +29,17 @@ class ThemeOptions
      */
     protected bool $needsUpdate = false;
 
+    private Core $core;
+
     /**
      * ThemeOptions constructor.
      *
-     * @param string $optionName
+     * @param Core $core
      */
-    public function __construct(string $optionName)
+    public function __construct(Core $core)
     {
+        $themeName = $core->getTheme()->getName();
+        $optionName = $themeName;
         $this->originalOptionName = $optionName;
         $optionName = preg_replace('/[^a-zA-Z0-9_]/', '', $optionName);
         $optionName = self::THEME_PREFIX . $optionName;
@@ -42,6 +47,14 @@ class ThemeOptions
             $optionName = substr($optionName, 0, self::TOTAL_MAX_LENGTH);
         }
         $this->optionName = $optionName;
+    }
+
+    /**
+     * @return Core
+     */
+    public function getCore(): Core
+    {
+        return $this->core;
     }
 
     /**

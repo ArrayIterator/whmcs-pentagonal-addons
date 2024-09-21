@@ -54,7 +54,7 @@ if (!defined("WHMCS")) {
             ];
         }
 
-        $core = include __DIR__ . '/hooks.php';
+        $core = require __DIR__ . '/hooks.php';
         if (!$core instanceof Core) {
             return [
                 'name' => 'Pentagonal Addon',
@@ -88,7 +88,7 @@ if (!defined("WHMCS")) {
                 'description' => 'PHP Version must be 7.2 or greater'
             ];
         }
-        $core = include __DIR__ . '/hooks.php';
+        $core = require __DIR__ . '/hooks.php';
         if (!$core instanceof Core) {
             return [
                 'status' => 'error',
@@ -127,7 +127,7 @@ if (!defined("WHMCS")) {
                 'description' => 'PHP Version must be 7.2 or greater'
             ];
         }
-        $core = include __DIR__ . '/hooks.php';
+        $core = require __DIR__ . '/hooks.php';
         if (!$core instanceof Core) {
             return [
                 'status' => 'error',
@@ -135,7 +135,7 @@ if (!defined("WHMCS")) {
             ];
         }
         /** @noinspection PhpInternalEntityUsedInspection */
-        return Core::factory()->getAddon()->deactivate();
+        return $core->getAddon()->deactivate();
     }
 
     /**
@@ -147,12 +147,11 @@ if (!defined("WHMCS")) {
      */
     function pentagonal_output($vars)
     {
-        $core = include __DIR__ . '/hooks.php';
-        if (!$core instanceof Core) {
-            return;
+        $core = require __DIR__ . '/hooks.php';
+        if ($core instanceof Core) {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $core->getAddon()->output($vars);
         }
-        /** @noinspection PhpInternalEntityUsedInspection */
-        $core->getAddon()->output($vars);
     }
 
     /**
@@ -163,11 +162,10 @@ if (!defined("WHMCS")) {
      */
     function pentagonal_upgrade($vars)
     {
-        $core = include __DIR__ . '/hooks.php';
-        if (!$core instanceof Core) {
-            return;
+        $core = require __DIR__ . '/hooks.php';
+        if ($core instanceof Core) {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            $core->getAddon()->upgrade($vars);
         }
-        /** @noinspection PhpInternalEntityUsedInspection */
-        Core::factory()->getAddon()->upgrade($vars);
     }
 })();

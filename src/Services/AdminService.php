@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Services;
 
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractService;
-use Pentagonal\Neon\WHMCS\Addon\Dispatcher\AdminDispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\RunnableServiceInterface;
 
 /**
@@ -23,38 +22,14 @@ class AdminService extends AbstractService implements RunnableServiceInterface
     protected string $category = 'system';
 
     /**
-     * @var ?AdminDispatcher $adminDispatcher the module page dispatcher
-     */
-    protected ?AdminDispatcher $adminDispatcher = null;
-
-    /**
-     * Get the module page object
-     *
-     * @return AdminDispatcher
-     */
-    public function getAdminDispatcher(): AdminDispatcher
-    {
-        return $this->adminDispatcher ??= new AdminDispatcher($this);
-    }
-
-    /**
-     * Check if the current user is allowed to access the admin page
-     *
-     * @return bool
-     */
-    public function isAllowedAccessAddonPage(): bool
-    {
-        return $this->getServices()->getCore()->getAddon()->isAllowedAccessAddonPage();
-    }
-
-    /**
      * @inheritDoc
      */
     protected function dispatch($arg = null, ...$args)
     {
-        if (!$this->getServices()->getCore()->isAdminAreaRequest()) {
+        $core = $this->getServices()->getCore();
+        if (!$core->getAddon()->isAddonPage()) {
             return;
         }
-        $this->getAdminDispatcher()->dispatch();
+        $core->getAdminDispatcher()->dispatch();
     }
 }

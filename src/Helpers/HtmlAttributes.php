@@ -300,7 +300,7 @@ class HtmlAttributes
      */
     public static function buildAttributesArray(array $attributes): array
     {
-        $performance = Performance::profile('build_attributes', __CLASS__);
+        $performance = Performance::profile('build_attributes', 'system.html_attributes');
         $attr = [];
         try {
             foreach ($attributes as $key => $value) {

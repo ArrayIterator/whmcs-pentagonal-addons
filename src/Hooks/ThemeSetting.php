@@ -24,13 +24,5 @@ class ThemeSetting extends AbstractHook
     protected function dispatch($vars)
     {
         return $vars;
-//        $vars = !is_array($vars) ? [] : $vars;
-//        $services = $this
-//            ->getHooksService()
-//            ->getServices();
-//        $themeService = $services->get(ThemeService::class);
-//        $schema = $services->getCore()->getSchemas();
-//        print_r($schema);
-//        exit;
     }
 }

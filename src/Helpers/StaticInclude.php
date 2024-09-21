@@ -23,7 +23,7 @@ class StaticInclude
         return (static function ($file, $extractedParams) {
             extract($extractedParams, EXTR_SKIP);
             unset($extractedParams);
-            return require $file;
+            return require_once $file;
         })($file, $extractedParams);
     }
 }

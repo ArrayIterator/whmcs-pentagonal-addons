@@ -1,0 +1,12 @@
+{
+    "$schema": "../../schema/plugin.json",
+    "name": "File Manager",
+    "version": "https://www.pentagonal.org/",
+    "url": "https://www.pentagonal.org/",
+    "author": "Pentagonal",
+    "author_url": "https://www.pentagonal.org/",
+    "license": "proprietary",
+    "license_url": "https://www.pentagonal.org/",
+    "namespace": "Pentagonal/Neon/WHMCS/Plugins/DebugBar",
+    "enable_admin_page": true
+}

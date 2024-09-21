@@ -117,7 +117,7 @@ abstract class AbstractMenu
     }
 
     /**
-     * @param UriInterface|string|Stringable $link
+     * @param UriInterface|string|\Stringable $link
      * @return $this
      */
     public function setLink($link) : AbstractMenu

@@ -3,15 +3,15 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon;
 
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Config;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Models\AddonSetting;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Models\Configuration;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\SessionFlash;
-use Pentagonal\Neon\WHMCS\Addon\Helpers\URL;
-use Pentagonal\Neon\WHMCS\Addon\Helpers\Config;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\User;
+use Pentagonal\Neon\WHMCS\Addon\Libraries\Url;
 use Throwable;
 use WHMCS\Admin\AdminServiceProvider;
 use function array_filter;
@@ -294,7 +294,7 @@ final class Addon
             return false;
         }
         $self = str_replace('\\', '//', $this->getCore()->getApplication()->getPhpSelf());
-        $base = AdminServiceProvider::getAdminRouteBase() . '/' . URL::ADDON_FILE;
+        $base = AdminServiceProvider::getAdminRouteBase() . '/' . Url::ADDON_FILE;
         $self = ltrim(preg_replace('#/+#', '/', $self), '/');
         $base = ltrim(preg_replace('#/+#', '/', $base), '/');
         $this->isAddonFile = $self === $base;
@@ -367,7 +367,7 @@ final class Addon
             return $error;
         }
         $stopCode = Random::bytes();
-        $performance = Performance::profile('addon_activate', Addon::class)
+        $performance = Performance::profile('addon_activate', 'system.addon')
             ->setStopCode($stopCode);
         try {
             $settings = AddonSetting::find($module, 'access');
@@ -451,7 +451,7 @@ final class Addon
             }
 
             SessionFlash::flash(self::SESSION_WELCOME_FLASH_NAME, true);
-            $url = URL::adminUrl('addonmodules.php?module=' . $module . '&ref=welcome');
+            $url = $this->getCore()->getUrl()->getAdminUrl('addonmodules.php?module=' . $module . '&ref=welcome');
             header('Location: ' . $url, true, 302);
             exit(0);
         } catch (Throwable $e) {
@@ -537,7 +537,6 @@ final class Addon
         $hookFile = $this->getAddonFile();
         $configFunction = $this->getAddonName() . '_output';
         $debug = (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2));
-
         if (($debug[0]['file']??null) !== $hookFile || ($debug[1]['function']??null) !== $configFunction) {
             return;
         }

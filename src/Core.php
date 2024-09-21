@@ -3,20 +3,31 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon;
 
+use Pentagonal\Neon\WHMCS\Addon\Dispatcher\AdminDispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Http\HttpFactory;
+use Pentagonal\Neon\WHMCS\Addon\Http\ServerRequest;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
+use Pentagonal\Neon\WHMCS\Addon\Libraries\ThemeOptions;
+use Pentagonal\Neon\WHMCS\Addon\Libraries\Url;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Schemas;
+use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
+use WHMCS\Admin;
 use WHMCS\Application;
 use WHMCS\View\Template\Theme;
-use function in_array;
+use function array_shift;
+use function debug_backtrace;
+use const DEBUG_BACKTRACE_IGNORE_ARGS;
 use const DIRECTORY_SEPARATOR;
 
-class Core
+/**
+ * Core class object for main handler
+ */
+final class Core
 {
     /**
      * @var string EVENT_BEFORE_CORE_DISPATCH before core dispatch
@@ -29,24 +40,19 @@ class Core
     public const EVENT_AFTER_CORE_DISPATCH = 'CoreAfterDispatch';
 
     /**
-     * @var Core $instance the core instance
-     */
-    private static self $instance;
-
-    /**
      * @var bool $dispatched the core dispatched
      */
     private bool $dispatched = false;
 
     /**
-     * @var EventManager $manager the event manager
+     * @var EventManager $eventManager the event manager
      */
-    private EventManager $manager;
+    private EventManager $eventManager;
 
     /**
-     * @var Application $whmcs the whmcs application
+     * @var Application $application the whmcs application
      */
-    private Application $whmcs;
+    private Application $application;
 
     /**
      * @var Services the services
@@ -79,6 +85,31 @@ class Core
     private HttpFactory $httpFactory;
 
     /**
+     * @var AdminDispatcher $adminDispatcher the admin dispatcher
+     */
+    private AdminDispatcher $adminDispatcher;
+
+    /**
+     * @var Url $url the url helper
+     */
+    private Url $url;
+
+    /**
+     * @var ServerRequestInterface $request the request
+     */
+    private ServerRequestInterface $request;
+
+    /**
+     * @var ThemeOptions $themeOptions the theme options
+     */
+    private ThemeOptions $themeOptions;
+
+    /**
+     * @var Admin|null|false;
+     */
+    private $whmcsAdmin = null;
+
+    /**
      * Core constructor.
      */
     private function __construct()
@@ -86,11 +117,22 @@ class Core
     }
 
     /**
-     * @return self
+     * Create the instance
+     *
+     * @return ?self
      */
-    public static function factory(): self
+    public static function createInstance() : ?self
     {
-        return self::$instance ??= new self();
+        $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $file = $debug[0]['file']??null;
+        $className = $debug[1]['class']??null;
+        if ($file !== __DIR__ . DIRECTORY_SEPARATOR . 'Singleton.php'
+            || $className !== Singleton::class
+        ) {
+            return null;
+        }
+
+        return new self();
     }
 
     /**
@@ -125,7 +167,7 @@ class Core
      */
     public function getApplication(): Application
     {
-        return $this->whmcs ??= Application::getInstance();
+        return $this->application ??= Application::getInstance();
     }
 
     /**
@@ -177,6 +219,42 @@ class Core
     {
         return $this->httpFactory ??= new HttpFactory();
     }
+
+    /**
+     * @return AdminDispatcher
+     */
+    public function getAdminDispatcher(): AdminDispatcher
+    {
+        return $this->adminDispatcher ??= new AdminDispatcher($this);
+    }
+
+    /**
+     * @return Url
+     */
+    public function getUrl(): Url
+    {
+        return $this->url ??= new Url($this);
+    }
+
+    /**
+     * @return ServerRequestInterface
+     */
+    public function getRequest(): ServerRequestInterface
+    {
+        return $this->request ??= ServerRequest::fromGlobals(
+            $this->getHttpFactory()->getServerRequestFactory(),
+            $this->getHttpFactory()->getStreamFactory()
+        );
+    }
+
+    /**
+     * @return ThemeOptions
+     */
+    public function getThemeOptions(): ThemeOptions
+    {
+        return $this->themeOptions ??= new ThemeOptions($this);
+    }
+
     /**
      * Check if the core is dispatched
      *
@@ -188,6 +266,29 @@ class Core
     }
 
     /**
+     * Get the admin object, the object get from globals
+     *
+     * @return ?Admin
+     */
+    public function getWhmcsAdmin(): ?Admin
+    {
+        if ($this->whmcsAdmin === null) {
+            $this->whmcsAdmin = false;
+            if (!$this->isAdminAreaRequest()) {
+                return null;
+            }
+            foreach ($GLOBALS as $value) {
+                if ($value instanceof Admin) {
+                    $this->whmcsAdmin = $value;
+                    return $value;
+                }
+            }
+        }
+
+        return $this->whmcsAdmin ?: null;
+    }
+
+    /**
      * Dispatch the core
      */
     public function dispatch() : self
@@ -195,15 +296,14 @@ class Core
         if ($this->isDispatched()) {
             return $this;
         }
-        // only allow on the addon file
-        $file = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 1)[0]['file']??null;
-        $addonFile = $this->getAddon()->getAddonFile();
-        $hooksFile = $this->getAddon()->getAddonDirectory() . DIRECTORY_SEPARATOR . 'hooks.php';
-        if (!in_array($file, [$addonFile, $hooksFile])) {
+        $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+        $function = (array_shift($debug)?:[])['function']??null;
+        $className = (array_shift($debug)?:[])['class']??null;
+        if ($function !== 'dispatch' || $className !== Singleton::class) {
             return $this;
         }
         $stopCode = Random::bytes();
-        $profiler = Performance::profile('core_dispatch', Core::class)
+        $profiler = Performance::profile('core_dispatch', 'system.core')
             ->setStopCode($stopCode);
         $em = $this->getEventManager();
         Logger::debug('Dispatching Core');
@@ -221,7 +321,6 @@ class Core
                     ]
                 );
             }
-
             $this->runServices($stopCode);
             $this->runHooks($stopCode);
         } finally {
@@ -249,7 +348,7 @@ class Core
      */
     private function runServices(string $stopCode)
     {
-        $performance = Performance::profile('core_dispatch_services', Core::class)
+        $performance = Performance::profile('core_dispatch_services', 'system.core')
             ->setStopCode($stopCode);
         try {
             $this->getServices()->run();
@@ -270,7 +369,7 @@ class Core
      */
     private function runHooks(string $stopCode)
     {
-        $performance = Performance::profile('core_dispatch_hooks', Core::class)
+        $performance = Performance::profile('core_dispatch_hooks', 'system.core')
             ->setStopCode($stopCode);
         try {
             $this->getHooks()->run();
@@ -331,6 +430,6 @@ class Core
      */
     public function getEventManager(): EventManagerInterface
     {
-        return $this->manager ??= new EventManager();
+        return $this->eventManager ??= new EventManager();
     }
 }

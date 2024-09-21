@@ -226,7 +226,7 @@ class AdminDispatcherHandler
             return false;
         }
         $this->processed = true;
-        if (!$this->getAdminDispatcher()->getAdminService()->isAllowedAccessAddonPage()) {
+        if (!$this->getAdminDispatcher()->getCore()->getAddon()->isAllowedAccessAddonPage()) {
             $error = new RuntimeException(
                 'Access Denied'
             );
@@ -247,7 +247,7 @@ class AdminDispatcherHandler
                 $error = $e;
                 return false;
             }
-            $httpFactory = $this->getAdminDispatcher()->getAdminService()->getServices()->getCore()->getHttpFactory();
+            $httpFactory = $this->getAdminDispatcher()->getCore()->getHttpFactory();
             if ($result instanceof DispatcherResponseInterface
                 || $result instanceof ResponseInterface
                 || $result instanceof StreamInterface

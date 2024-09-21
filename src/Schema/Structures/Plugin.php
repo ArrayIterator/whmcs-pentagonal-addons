@@ -7,6 +7,7 @@ use Pentagonal\Neon\WHMCS\Addon\Schema\Abstracts\AbstractStructure;
 use Swaggest\JsonSchema\Constraint\Format;
 use Swaggest\JsonSchema\JsonSchema;
 use Swaggest\JsonSchema\Schema;
+use function str_replace;
 
 class Plugin extends AbstractStructure
 {
@@ -92,34 +93,36 @@ class Plugin extends AbstractStructure
             ->addPropertyMapping(Schema::PROP_ID, 'id');
 
         $properties->schema = Schema::string()
-            //->setFormat(Format::URI) // disabled to allow path
-            ->setDescription('The schema uri of the plugin');
+            ->setDescription('The schema uri of the plugin')
+            ->setFormat(Format::URI_REFERENCE);
         $properties->id = Schema::string()
             ->setDescription('The id of the plugin')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->name = Schema::string()
             ->setDescription('The name of the plugin');
         $properties->version = Schema::string()
             ->setDescription('The version of the plugin');
         $properties->url = Schema::string()
             ->setDescription('The url of the plugin')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->author = Schema::string()
             ->setDescription('The author of the plugin');
         $properties->author_url = Schema::string()
             ->setDescription('The author url of the plugin')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->license = Schema::string()
             ->setDescription('The license of the plugin');
         $properties->license_url = Schema::string()
             ->setDescription('The license url of the plugin')
-            ->setFormat(Format::URI);
+            ->setFormat(Format::URI_REFERENCE);
         $properties->enable_admin_page = Schema::boolean()
             ->setDescription('Enable Page on addon plugin')
             ->setDefault(false);
         $properties->namespace = Schema::string()
             ->setDescription('The namespace of the plugin class')
-            ->setPattern('^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(\\\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$');
+            ->setPattern(
+                '^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*([\\\\/][a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*$'
+            );
     }
 
     /**
@@ -199,7 +202,7 @@ class Plugin extends AbstractStructure
      */
     public function getNamespace(): ?string
     {
-        return $this->namespace;
+        return $this->namespace ? str_replace('/', '\\', $this->namespace) : null;
     }
 
     /**

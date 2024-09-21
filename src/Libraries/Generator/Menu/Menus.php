@@ -9,7 +9,6 @@ use IteratorAggregate;
 use Pentagonal\Neon\WHMCS\Addon\Core;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\HtmlAttributes;
-use Pentagonal\Neon\WHMCS\Addon\Http\ServerRequest;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -41,13 +40,27 @@ class Menus implements Stringable, IteratorAggregate
     protected EventManager $eventManager;
 
     /**
+     * @var Core $core
+     */
+    protected Core $core;
+
+    /**
      * Menus constructor.
      *
-     * @param ?EventManager $manager
+     * @param Core $core
      */
-    public function __construct(?EventManager $manager = null)
+    public function __construct(Core $core)
     {
-        $this->setEventManager($manager??new EventManager());
+        $this->core = $core;
+        $this->setEventManager($core->getEventManager());
+    }
+
+    /**
+     * @return Core
+     */
+    public function getCore(): Core
+    {
+        return $this->core;
     }
 
     /**
@@ -229,7 +242,7 @@ class Menus implements Stringable, IteratorAggregate
             return $attributes;
         }
         if (is_string($link)) {
-            $link = Core::factory()->getHttpFactory()->getUriFactory()->createUri($link);
+            $link = $this->getCore()->getHttpFactory()->getUriFactory()->createUri($link);
             if ($link->getHost() === '') {
                 $link = $link->withHost($request->getUri()->getHost());
             }
@@ -352,10 +365,7 @@ class Menus implements Stringable, IteratorAggregate
         if ($maxDepth < 0) {
             return '';
         }
-        $request = $request??ServerRequest::fromGlobals(
-            Core::factory()->getHttpFactory()->getServerRequestFactory(),
-            Core::factory()->getHttpFactory()->getStreamFactory()
-        );
+        $request = $request??$this->getCore()->getRequest();
         $tag = !in_array($listTag, ['ul', 'ol']) ? 'div' : $listTag;
         $subListTag = $tag === 'div' ? 'div' : 'li';
 
@@ -437,12 +447,12 @@ class Menus implements Stringable, IteratorAggregate
      * Create Menus from Array
      *
      * @param array $collections
-     * @param EventManager|null $manager
+     * @param Core $core
      * @return Menus
      */
-    public static function createFromArray(array $collections, ?EventManager $manager) : Menus
+    public static function createFromArray(array $collections, Core $core) : Menus
     {
-        $menus = new static($manager);
+        $menus = new static($core);
         foreach ($collections as $id => $definitions) {
             if ($definitions instanceof Menu) {
                 $menus->addMenu($definitions);

@@ -4,8 +4,10 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Models\AddonSetting;
+use WHMCS\Admin as WHMCSAdmin;
+use WHMCS\Session as WHMCSSession;
 use WHMCS\User\Admin;
-use WHMCS\User\User as WhmcsUser;
+use WHMCS\User\User as WhmcsUserUser;
 use function explode;
 use function in_array;
 use function is_numeric;
@@ -19,7 +21,7 @@ final class User
     protected static array $admins = [];
 
     /**
-     * @var array{int, WhmcsUser|false}[] $users the users
+     * @var array{int, WhmcsUserUser|false}[] $users the users
      */
     protected static array $users = [];
 
@@ -35,7 +37,7 @@ final class User
      */
     public static function userId() : ?int
     {
-        $userId = $_SESSION['uid'] ?? null;
+        $userId = WHMCSSession::get('uid');
         return is_numeric($userId) ? (int) $userId : null;
     }
 
@@ -46,7 +48,7 @@ final class User
      */
     public static function adminId() : ?int
     {
-        $adminId = $_SESSION['adminid'] ?? null;
+        $adminId = WHMCSAdmin::getID();
         return is_numeric($adminId) ? (int) $adminId : null;
     }
 
@@ -73,9 +75,9 @@ final class User
     /**
      * Get the user
      *
-     * @return WhmcsUser|null
+     * @return WhmcsUserUser|null
      */
-    public static function user() : ?WhmcsUser
+    public static function user() : ?WhmcsUserUser
     {
         $userId = self::userId();
         if ($userId === null) {
@@ -86,7 +88,7 @@ final class User
         }
 
         /** @noinspection PhpUndefinedMethodInspection */
-        self::$users[$userId] = WhmcsUser::find($userId)?:false;
+        self::$users[$userId] = WhmcsUserUser::find($userId)?:false;
         return self::$users[$userId]?:null;
     }
 

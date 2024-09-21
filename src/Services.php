@@ -287,7 +287,7 @@ class Services implements ServicesInterface
             return;
         }
         $stopCode = Random::bytes();
-        $performance = Performance::profile('services_init', Services::class)
+        $performance = Performance::profile('services_init', 'system.services')
             ->setStopCode($stopCode);
         $this->initialized = true;
         $em = $this->getCore()->getEventManager();
@@ -309,7 +309,7 @@ class Services implements ServicesInterface
             if (!$serviceFile || !file_exists($serviceFile)) {
                 return;
             }
-            $servicePerformance = Performance::profile('services_init_include', Services::class)
+            $servicePerformance = Performance::profile('services_init_include', 'system.services')
                 ->setStopCode($stopCode);
             try {
                 // no-catch

@@ -7,6 +7,7 @@ use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\ThemeSchemaInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Themes;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaThemeTrait;
+use Swaggest\JsonSchema\Structure\ObjectItemContract;
 use function dirname;
 use function file_exists;
 use function is_bool;
@@ -35,6 +36,14 @@ class ThemeSchema implements ThemeSchemaInterface
     public function getSchemaClassName(): string
     {
         return Themes::class;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRefSchema(): ?ObjectItemContract
+    {
+        return $this->refSchema ??= Themes::schema()->exportSchema();
     }
 
     /**
