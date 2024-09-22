@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
-use InvalidArgumentException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableDataException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use RuntimeException;
@@ -107,7 +109,7 @@ class UploadedFile implements UploadedFileInterface
      *
      * @param StreamInterface|string|resource $streamOrFile
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentCriteriaException
      */
     private function setStreamOrFile($streamOrFile) : void
     {
@@ -118,19 +120,19 @@ class UploadedFile implements UploadedFileInterface
         } elseif ($streamOrFile instanceof StreamInterface) {
             $this->stream = $streamOrFile;
         } else {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Invalid stream or file provided for UploadedFile'
             );
         }
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentCriteriaException
      */
     private function setError(int $error) : void
     {
         if (false === in_array($error, self::ERRORS, true)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Invalid error status for UploadedFile'
             );
         }
@@ -162,11 +164,11 @@ class UploadedFile implements UploadedFileInterface
     private function validateActive() : void
     {
         if (false === $this->isOk()) {
-            throw new RuntimeException('Cannot retrieve stream due to upload error');
+            throw new UnprocessableDataException('Cannot retrieve stream due to upload error');
         }
 
         if ($this->isMoved()) {
-            throw new RuntimeException('Cannot retrieve stream after it has already been moved');
+            throw new UnprocessableDataException('Cannot retrieve stream after it has already been moved');
         }
     }
 
@@ -189,7 +191,7 @@ class UploadedFile implements UploadedFileInterface
         $this->validateActive();
 
         if (false === $this->isStringNotEmpty($targetPath)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Invalid path provided for move operation; must be a non-empty string'
             );
         }
@@ -209,7 +211,7 @@ class UploadedFile implements UploadedFileInterface
         }
 
         if (false === $this->moved) {
-            throw new RuntimeException(
+            throw new UnprocessableException(
                 sprintf('Uploaded file could not be moved to %s', $targetPath)
             );
         }

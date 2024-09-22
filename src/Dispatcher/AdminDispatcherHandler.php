@@ -6,19 +6,21 @@ namespace Pentagonal\Neon\WHMCS\Addon\Dispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherHandlerApiInterface;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherHandlerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherResponseInterface;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\AlreadyProcessedException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\HandlerNotFoundException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\PermissionDeniedException;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
-use RuntimeException;
 use SplObjectStorage;
 use Throwable;
 use function is_object;
 use function is_string;
 use function iterator_to_array;
 use function method_exists;
-use function ob_end_clean;
 use function ob_get_clean;
 use function ob_get_level;
-use function ob_start;
+use function str_ends_with;
 use function strtolower;
 
 class AdminDispatcherHandler
@@ -32,6 +34,11 @@ class AdminDispatcherHandler
      * @var SplObjectStorage<DispatcherHandlerInterface> $objectStorage
      */
     protected SplObjectStorage $objectStorage;
+
+    /**
+     * @var string $template the template name
+     */
+    protected string $template = 'content.tpl';
 
     /**
      * @var ?array{type: string, message: string} $message
@@ -146,6 +153,30 @@ class AdminDispatcherHandler
     }
 
     /**
+     * Get template file
+     *
+     * @return string
+     */
+    public function getTemplateFile() : string
+    {
+        return $this->template;
+    }
+
+    /**
+     * Set template file
+     *
+     * @param string $file
+     * @return void
+     */
+    public function setTemplateFile(string $file)
+    {
+        if (str_ends_with(strtolower($file), '.tpl')) {
+            $file .= '.tpl';
+        }
+        $this->template = $file;
+    }
+
+    /**
      * Check if the handler is processed
      *
      * @return bool
@@ -177,7 +208,7 @@ class AdminDispatcherHandler
     {
         $isApi = $this->getAdminDispatcher()->isApiRequest();
         $routeQ = $this->getAdminDispatcher()->getRouteQuery();
-        $handlerPage = $handler->getRoutePath();
+        $handlerPage = trim($handler->getRoutePath(), '/');
         $isCaseSensitive = $handler->isCaseSensitivePage();
         $lowerPage = is_string($routeQ) ? strtolower($routeQ) : $routeQ;
         if ($handlerPage !== '*') { // process if *
@@ -197,37 +228,25 @@ class AdminDispatcherHandler
     }
 
     /**
-     * Clear buffer
-     *
-     * @param int $previousLevel
-     * @return void
-     */
-    private function clearBuffer(int $previousLevel) : void
-    {
-        if ($previousLevel < ob_get_level()) {
-            ob_end_clean();
-        }
-    }
-
-    /**
      * Process the handler
      *
      * @param $vars
-     * @param $handled
-     * @param $error
+     * @param null $handled
+     * @param null $error
+     * @return false|mixed|object|DispatcherResponseInterface|ResponseInterface|StreamInterface|string
      */
     public function process($vars, &$handled = null, &$error = null)
     {
         $handled = false;
         if ($this->isProcessed()) {
-            $error = new RuntimeException(
+            $error = new AlreadyProcessedException(
                 'Already processed'
             );
             return false;
         }
         $this->processed = true;
         if (!$this->getAdminDispatcher()->getCore()->getAddon()->isAllowedAccessAddonPage()) {
-            $error = new RuntimeException(
+            $error = new PermissionDeniedException(
                 'Access Denied'
             );
             $this->setMessage('error', 'Access Denied');
@@ -237,35 +256,31 @@ class AdminDispatcherHandler
             if (!$this->isProcessable($handler, $vars)) {
                 continue;
             }
-
             $handled = true;
-            $level = ob_get_level();
-            ob_start();
-            try {
-                $result = $handler->process($vars, $this);
-            } catch (Throwable $e) {
-                $error = $e;
-                return false;
-            }
-            $httpFactory = $this->getAdminDispatcher()->getCore()->getHttpFactory();
-            if ($result instanceof DispatcherResponseInterface
-                || $result instanceof ResponseInterface
-                || $result instanceof StreamInterface
-            ) {
-                $this->clearBuffer($level);
-            } elseif (is_string($result) || is_object($result) && method_exists($result, '__toString')) {
-                $this->clearBuffer($level);
-                $result = $httpFactory->getStreamFactory()->createStream((string) $result);
-            } else {
-                if ($level < ob_get_level()) {
-                    $result = $httpFactory->getStreamFactory()->createStream((string) ob_get_clean());
+            return DataNormalizer::bufferedCall(function (DispatcherHandlerInterface $handler, $vars, int $level) use (&$error) {
+                try {
+                    $result = $handler->process($vars, $this);
+                } catch (Throwable $e) {
+                    $error = $e;
+                    return false;
                 }
-            }
-            $this->processedHandler = $handler;
-            return $result;
+                $httpFactory = $this->getAdminDispatcher()->getCore()->getHttpFactory();
+                if (is_string($result) || is_object($result) && method_exists($result, '__toString')) {
+                    $result = $httpFactory->getStreamFactory()->createStream((string) $result);
+                } elseif (!$result instanceof DispatcherResponseInterface
+                    &&  !$result instanceof ResponseInterface
+                    && ! $result instanceof StreamInterface
+                ) {
+                    if ($level < ob_get_level()) {
+                        $result = $httpFactory->getStreamFactory()->createStream((string) ob_get_clean());
+                    }
+                }
+                $this->processedHandler = $handler;
+                return $result;
+            }, $handler, $vars, ob_get_level());
         }
         $page = $this->getAdminDispatcher()->getRouteQuery()??'(null)';
-        $error = new RuntimeException(
+        $error = new HandlerNotFoundException(
             'No handler found for page ' . $page
         );
         $this->setMessage('error', 'No handler found for page ' . $page);

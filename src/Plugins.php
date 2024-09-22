@@ -6,9 +6,11 @@ namespace Pentagonal\Neon\WHMCS\Addon;
 use ArrayAccess;
 use ArrayIterator;
 use ArrayObject;
-use InvalidArgumentException;
 use IteratorAggregate;
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractPlugin;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnexpectedValueException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Options;
@@ -30,8 +32,6 @@ use function is_bool;
 use function is_file;
 use function is_int;
 use function is_string;
-use function ob_end_clean;
-use function ob_start;
 use function realpath;
 use function sprintf;
 use function str_starts_with;
@@ -237,13 +237,13 @@ class Plugins implements IteratorAggregate
      *
      * @param string $dir
      * @return AbstractPlugin
-     * @throws Throwable
+     * @throws InvalidArgumentCriteriaException|UnprocessableException|UnexpectedValueException
      */
     public function createPlugin(string $dir) : AbstractPlugin
     {
         $dir = rtrim(DataNormalizer::makeUnixSeparator($dir), '/');
         if (!str_starts_with($dir, $this->rootDir)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Directory is outside from ROOTDIR'
             );
         }
@@ -251,7 +251,7 @@ class Plugins implements IteratorAggregate
         $this->pluginSchemas[$pathOnly] = $this->getSchema()->getSchemaPlugin($dir);
         if (!$this->pluginSchemas[$pathOnly] instanceof Plugin) {
             unset($this->pluginSchemas[$pathOnly]);
-            throw new RuntimeException(
+            throw new InvalidArgumentCriteriaException(
                 'Invalid schema for plugin'
             );
         }
@@ -261,28 +261,25 @@ class Plugins implements IteratorAggregate
         try {
             $pluginFile = $dir . '/Plugin.php';
             if (!file_exists($pluginFile) || !is_file($pluginFile)) {
-                throw new RuntimeException(
+                throw new UnprocessableException(
                     'Plugin.php does not exists in : ' . $dir
                 );
             }
             $namespace = trim($this->pluginSchemas[$pathOnly]->getNamespace(), '\\');
             $className = $namespace . '\\Plugin';
             if (!class_exists($className)) {
-                ob_start();
-                try {
+                DataNormalizer::bufferedCall(static function ($pluginFile) {
                     require_once $pluginFile;
-                } finally {
-                    ob_end_clean();
-                }
+                }, $pluginFile);
             }
             if (!class_exists($className)) {
-                throw new RuntimeException(
+                throw new InvalidArgumentCriteriaException(
                     sprintf('Class %s does not exist', $className)
                 );
             }
             $ref = new ReflectionClass($className);
             if (!$ref->isSubclassOf(AbstractPlugin::class)) {
-                throw new RuntimeException(
+                throw new InvalidArgumentCriteriaException(
                     sprintf(
                         'Class %s is not subclass of %s',
                         $ref->getName(),
@@ -295,7 +292,7 @@ class Plugins implements IteratorAggregate
             $performance->stop([], $stopCode);
         }
         if (!isset($object)) {
-            throw new RuntimeException(
+            throw new UnexpectedValueException(
                 'Can not create plugin'
             );
         }
@@ -348,7 +345,9 @@ class Plugins implements IteratorAggregate
                     Logger::error(
                         $e,
                         [
-                            'type' => 'error',
+                            'status' => 'error',
+                            'type' => 'Plugins',
+                            'method' => 'load',
                             'plugin' => $pathOnly,
                             'class' => __CLASS__
                         ]
@@ -404,7 +403,7 @@ class Plugins implements IteratorAggregate
                 if (!$this->isPluginActive($plugin)) {
                     unset($this->activePluginsOptions[$pathOnly]);
                     $update = true;
-                    $this->pluginsError[$pathOnly] = $plugin->getLoadError()??new RuntimeException(
+                    $this->pluginsError[$pathOnly] = $plugin->getLoadError()??new UnprocessableException(
                         'Plugin can not be loaded'
                     );
                 }
@@ -423,7 +422,9 @@ class Plugins implements IteratorAggregate
             Logger::error(
                 $e,
                 [
-                    'type' => 'error',
+                    'status' => 'error',
+                    'type' => 'Plugins',
+                    'method' => 'load',
                     'event' => self::EVENT_PLUGINS_LOADED,
                     'class' => __CLASS__
                 ]

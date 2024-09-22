@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
-use InvalidArgumentException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Traits\HttpStreamHelperTrait;
 use Psr\Http\Message\ResponseInterface;
 use function is_int;
@@ -84,7 +84,7 @@ class Response extends Message implements ResponseInterface
     private function assertStatusCodeIsInteger($statusCode) : void
     {
         if (!is_int($statusCode)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Status code must be an integer value.'
             );
         }
@@ -93,7 +93,7 @@ class Response extends Message implements ResponseInterface
     private function assertStatusCodeRange(int $statusCode) : void
     {
         if ($statusCode < 100 || $statusCode >= 600) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Status code must be an integer value between 1xx and 5xx.'
             );
         }

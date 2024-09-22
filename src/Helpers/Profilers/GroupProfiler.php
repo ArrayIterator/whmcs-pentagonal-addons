@@ -149,8 +149,30 @@ final class GroupProfiler implements Countable, IteratorAggregate, JsonSerializa
         return new ArrayIterator($this->getProfilers());
     }
 
+    /**
+     * @return array{
+     *       "name": "string",
+     *       "records": array<array{
+     *          "name": "string",
+     *          "memory": array{
+     *              "start" : int,
+     *              "end" : int,
+     *              "usage" : int,
+     *          },
+     *          "time": array{
+     *              "start" : int,
+     *              "end" : int,
+     *              "usage" : int,
+     *          },
+     *          "data": array
+     *      }>
+     *   }
+     */
     public function jsonSerialize() : array
     {
-        return $this->getProfilers();
+        return [
+            'name' => $this->getName(),
+            'records' => $this->getProfilers()
+        ];
     }
 }

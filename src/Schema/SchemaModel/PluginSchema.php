@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel;
 
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnsupportedArgumentDataTypeException;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
-use RuntimeException;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\PluginInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\PluginSchemaInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
@@ -70,7 +71,7 @@ class PluginSchema implements PluginSchemaInterface
      *
      * @param string $pluginDirectory
      * @return Plugin
-     * @throws \Throwable
+     * @throws InvalidArgumentCriteriaException
      */
     public function getSchemaPlugin(string $pluginDirectory) : Plugin
     {
@@ -79,7 +80,7 @@ class PluginSchema implements PluginSchemaInterface
             return clone self::$schemaLists[$schemaFile];
         }
         if (!file_exists($schemaFile)) {
-            throw new RuntimeException(
+            throw new InvalidArgumentCriteriaException(
                 'Schema file plugin.json does not exists'
             );
         }
@@ -88,7 +89,7 @@ class PluginSchema implements PluginSchemaInterface
     }
 
     /**
-     * @throws \Throwable
+     * @throws UnsupportedArgumentDataTypeException|InvalidArgumentCriteriaException
      */
     public function getSchema(PluginInterface $plugin): Plugin
     {
@@ -98,11 +99,11 @@ class PluginSchema implements PluginSchemaInterface
         }
         $ref = new ReflectionObject($plugin);
         if ($ref->isAnonymous()) {
-            throw new RuntimeException('Schema does not accept anonymous class');
+            throw new UnsupportedArgumentDataTypeException('Schema does not accept anonymous class');
         }
         $path = $ref->getFileName();
         if (!$path) {
-            throw new RuntimeException(
+            throw new InvalidArgumentCriteriaException(
                 sprintf('Plugin object: %s does not have path', $className)
             );
         }

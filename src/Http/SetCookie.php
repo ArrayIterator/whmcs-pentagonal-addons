@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
 use DateTimeInterface;
-use InvalidArgumentException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Psr\Http\Message\ResponseInterface;
 use Stringable;
 use function gmdate;
@@ -105,12 +105,12 @@ class SetCookie implements Stringable
     {
         $name = trim($name);
         if ($name === '') {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Cookie name is empty or contain whitespace only'
             );
         }
         if (preg_match("/[^!#$%&'*+\-.^_`|~0-9a-zA-Z]/", $name)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Cookie contain invalid name'
             );
         }
@@ -120,13 +120,13 @@ class SetCookie implements Stringable
     {
         $sameSite = strtolower(trim($sameSite));
         if (!in_array($sameSite, ['', 'lax', 'strict', 'none'])) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'The same site attribute must be "lax", "strict", "none" or ""'
             );
         }
 
         if ($sameSite === 'none' && !$secure) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'The same site attribute "none" only allowed when secure is set to true'
             );
         }

@@ -3,11 +3,13 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Traits;
 
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidDataTypeException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnexpectedValueException;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Abstracts\AbstractStructure;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\SchemasInterface;
 use Swaggest\JsonSchema\Context;
-use Swaggest\JsonSchema\InvalidValue;
 use Swaggest\JsonSchema\Schema;
 use Swaggest\JsonSchema\Structure\ClassStructure;
 use Swaggest\JsonSchema\Structure\ObjectItemContract;
@@ -96,8 +98,7 @@ trait SchemaTrait
      * @param string $file
      * @param class-string<T> $className
      * @return ?T
-     * @throws InvalidValue
-     * @throws Throwable
+     * @throws UnexpectedValueException
      */
     public function createSchemaFromFile(string $file, string $className = Schema::class): ?ObjectItemContract
     {
@@ -109,9 +110,13 @@ trait SchemaTrait
         try {
             /** @noinspection PhpRedundantOptionalArgumentInspection */
             if ($className === Schema::class || is_subclass_of($className, ClassStructure::class, true)) {
-                return $className::import($this->readJson($file));
+                try {
+                    return $className::import($this->readJson($file));
+                } catch (Throwable $e) {
+                    throw new UnexpectedValueException($e->getMessage(), $e->getCode(), $e);
+                }
             }
-            throw new InvalidValue(sprintf('Invalid Schema Class: %s', $className), E_USER_WARNING);
+            throw new UnexpectedValueException(sprintf('Invalid Schema Class: %s', $className), E_USER_WARNING);
         } finally {
             $performance->stop();
         }
@@ -120,7 +125,7 @@ trait SchemaTrait
     /**
      * @param string $file
      * @return ?array
-     * @throws InvalidValue
+     * @throws UnexpectedValueException
      */
     protected function readJson(string $file) : ?object
     {
@@ -132,7 +137,7 @@ trait SchemaTrait
         try {
             set_error_handler(
                 static function ($errno, $errStr) {
-                    throw new InvalidValue($errStr, $errno);
+                    throw new InvalidDataTypeException($errStr, $errno);
                 },
                 E_USER_WARNING
             );
@@ -170,7 +175,7 @@ trait SchemaTrait
                     file_put_contents($remoteFile, $content === false ? 'false' : $content);
                 }
                 if ($content === false || $content === 'false') {
-                    throw new InvalidValue(sprintf('Failed to read file: %s', $originalFile), E_USER_WARNING);
+                    throw new UnexpectedValueException(sprintf('Failed to read file: %s', $originalFile), E_USER_WARNING);
                 }
             } finally {
                 restore_error_handler();
@@ -179,7 +184,7 @@ trait SchemaTrait
 
             $json = json_decode($content, false);
             if (!is_object($json)) {
-                throw new InvalidValue(sprintf('Invalid JSON Schema: %s', $content), E_USER_WARNING);
+                throw new UnexpectedValueException(sprintf('Invalid JSON Schema: %s', $content), E_USER_WARNING);
             }
         } finally {
             $performance->stop();
@@ -194,7 +199,7 @@ trait SchemaTrait
      * Get schema from file
      * @param string $file the file of json
      * @param class-string<T> $className the classname structure
-     * @throws Throwable
+     * @throws InvalidArgumentCriteriaException|UnexpectedValueException
      * @return T
      */
     public function createSchemaStructureFor(string $file, string $className) : ?AbstractStructure
@@ -208,7 +213,7 @@ trait SchemaTrait
             return null;
         }
         if (!is_subclass_of($className, AbstractStructure::class)) {
-            throw new InvalidValue(sprintf('Invalid Schema Class: %s', $className));
+            throw new InvalidArgumentCriteriaException(sprintf('Invalid Schema Class: %s', $className));
         }
         $performance = Performance::profile('validate_schema', 'system.schema')
             ->setData([
@@ -218,7 +223,7 @@ trait SchemaTrait
         try {
             $schema = $this->createSchemaFromFile($file, $className);
             if (!$schema instanceof AbstractStructure || ! $schema instanceof $className) {
-                throw new InvalidValue('Invalid Schema');
+                throw new InvalidArgumentCriteriaException('Invalid Schema');
             }
             $context = new Context();
             $context->skipValidation = true;

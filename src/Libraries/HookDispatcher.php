@@ -82,7 +82,8 @@ class HookDispatcher implements HookDispatcherInterface
             return run_hook($name, $arg, $unpackArgument === true);
         } catch (Throwable $e) {
             Logger::error($e, [
-                'type' => 'Hook',
+                'status' => 'error',
+                'type' => 'HookDispatcher',
                 'method' => 'run',
                 'name' => $name,
                 'arg' => $arg,

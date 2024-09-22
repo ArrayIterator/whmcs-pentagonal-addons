@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
-use InvalidArgumentException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Factory\ServerRequestFactory;
 use Pentagonal\Neon\WHMCS\Addon\Http\Factory\StreamFactory;
 use Psr\Http\Message\ServerRequestFactoryInterface;
@@ -70,7 +70,7 @@ class ServerRequest extends Request implements ServerRequestInterface
      *
      * @param array $files An array which respect $_FILES structure
      *
-     * @throws InvalidArgumentException for unrecognized values
+     * @throws InvalidArgumentCriteriaException for unrecognized values
      */
     public static function normalizeFiles(array $files) : array
     {
@@ -84,7 +84,7 @@ class ServerRequest extends Request implements ServerRequestInterface
             } elseif (is_array($value)) {
                 $normalized[$key] = self::normalizeFiles($value);
             } else {
-                throw new InvalidArgumentException(
+                throw new InvalidArgumentCriteriaException(
                     'Invalid value in files specification'
                 );
             }

@@ -135,7 +135,8 @@ class Services implements ServicesInterface
             $this->add(new $serviceOrClassName($this));
         } catch (Throwable $e) {
             Logger::error($e, [
-                'type' => 'service',
+                'status' => 'error',
+                'type' => 'Services',
                 'method' => 'add',
                 'service' => $serviceOrClassName
             ]);
@@ -247,7 +248,8 @@ class Services implements ServicesInterface
                         $em->apply(self::EVENT_AFTER_SERVICE_RUN, $service);
                     } catch (Throwable $e) {
                         Logger::error($e, [
-                            'type' => 'service',
+                            'status' => 'error',
+                            'type' => 'Services',
                             'method' => 'run',
                             'service' => get_class($service)
                         ]);
@@ -257,7 +259,8 @@ class Services implements ServicesInterface
             }
         } catch (Throwable $e) {
             Logger::error($e, [
-                'type' => 'service',
+                'status' => 'error',
+                'type' => 'Services',
                 'method' => 'run'
             ]);
             $em->apply(self::EVENT_SERVICES_ERROR, $this, $e);
@@ -296,7 +299,8 @@ class Services implements ServicesInterface
                 $em->apply(self::EVENT_BEFORE_SERVICES_INIT, $this);
             } catch (Throwable $e) {
                 Logger::error($e, [
-                    'type' => 'service',
+                    'status' => 'error',
+                    'type' => 'Services',
                     'method' => 'init',
                     'event' => self::EVENT_BEFORE_SERVICES_INIT
                 ]);
@@ -319,14 +323,16 @@ class Services implements ServicesInterface
             }
         } catch (Throwable $e) {
             Logger::error($e, [
-                'type' => 'service',
+                'status' => 'error',
+                'type' => 'Services',
                 'method' => 'init'
             ]);
             try {
                 $em->apply(self::EVENT_SERVICE_ERROR, $this, $e);
             } catch (Throwable $e) {
                 Logger::error($e, [
-                    'type' => 'service',
+                    'status' => 'error',
+                    'type' => 'Services',
                     'method' => 'init',
                     'event' => self::EVENT_SERVICE_ERROR
                 ]);
@@ -336,7 +342,8 @@ class Services implements ServicesInterface
                 $em->apply(self::EVENT_AFTER_SERVICES_INIT, $this);
             } catch (Throwable $e) {
                 Logger::error($e, [
-                    'type' => 'service',
+                    'status' => 'error',
+                    'type' => 'Services',
                     'method' => 'init',
                     'event' => self::EVENT_AFTER_SERVICES_INIT
                 ]);

@@ -5,7 +5,7 @@ namespace Pentagonal\Neon\WHMCS\Addon\Http\Traits;
 
 use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\MalformedHeaderException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\MalformedMethodException;
-use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\UnsupportedRuntimeException;
+use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\HttpUnsupportedRuntimeException;
 use Psr\Http\Message\UriInterface;
 use function get_class;
 use function is_object;
@@ -105,7 +105,7 @@ trait HttpAssertionTrait
     protected function assertProtocolVersion($version): void
     {
         if (!is_string($version)) {
-            throw new UnsupportedRuntimeException(
+            throw new HttpUnsupportedRuntimeException(
                 sprintf(
                     'Protocol version must be as a string but "%s" given.',
                     is_object($version) ? get_class($version) : $version

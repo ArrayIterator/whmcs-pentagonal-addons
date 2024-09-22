@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Abstracts;
 
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnsupportedArgumentDataTypeException;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
@@ -13,15 +17,11 @@ use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 use Psr\Http\Message\UriInterface;
 use ReflectionClass;
 use ReflectionObject;
-use RuntimeException;
 use Throwable;
 use function array_pop;
 use function explode;
 use function get_class;
 use function implode;
-use function ob_get_length;
-use function ob_get_level;
-use function ob_start;
 use function strtolower;
 
 abstract class AbstractPlugin implements PluginInterface
@@ -73,7 +73,7 @@ abstract class AbstractPlugin implements PluginInterface
         array_pop($namespace);
         $namespace = implode('\\', $namespace);
         if ($namespace !== $pluginNamespace) {
-            throw new RuntimeException('Schema namespace not equal plugin namespace');
+            throw new UnsupportedArgumentDataTypeException('Schema namespace not equal plugin namespace');
         }
         if ($reflectionClass && $reflectionClass->getName() === $lowerClassName) {
             $fileName = $reflectionClass->getFileName();
@@ -81,7 +81,7 @@ abstract class AbstractPlugin implements PluginInterface
             $fileName = (new ReflectionObject($this))->getFileName();
         }
         if (!$fileName) {
-            throw new RuntimeException(
+            throw new InvalidArgumentCriteriaException(
                 'The plugin does not have file name'
             );
         }
@@ -157,39 +157,37 @@ abstract class AbstractPlugin implements PluginInterface
         $performance = Performance::profile('load', 'plugin')
             ->setStopCode($stopCode);
         $this->initLoaded = true;
-        $level = ob_get_level();
-        ob_start();
-        try {
-            $this->doLoad();
-            $this->loaded = true;
-        } catch (Throwable $e) {
-            $this->loadError = $e;
-            Logger::error(
-                $e,
-                [
-                    'type' => 'error',
-                    'message' => 'Error Loading Plugin',
-                    'plugin' => get_class($this),
-                ]
-            );
-        }
-        try {
-            $this->getEventManager()->apply(Plugins::EVENT_PLUGIN_LOADED, $this);
-        } catch (Throwable $e) {
-            Logger::error(
-                $e,
-                [
-                    'type' => 'error',
-                    'event' => Plugins::EVENT_PLUGIN_LOADED,
-                ]
-            );
-        }
-        if ($level < ob_get_level() || ob_get_length() > 0) {
-            ob_end_clean();
-            if (ob_get_level() < $level) {
-                ob_start();
+        DataNormalizer::bufferedCall(function () {
+            try {
+                $this->doLoad();
+                $this->loaded = true;
+            } catch (Throwable $e) {
+                $this->loadError = $e;
+                Logger::error(
+                    $e,
+                    [
+                        'status' => 'error',
+                        'type' => 'Plugin',
+                        'method' => 'load',
+                        'message' => 'Error Loading Plugin',
+                        'plugin' => get_class($this),
+                    ]
+                );
             }
-        }
+            try {
+                $this->getEventManager()->apply(Plugins::EVENT_PLUGIN_LOADED, $this);
+            } catch (Throwable $e) {
+                Logger::error(
+                    $e,
+                    [
+                        'status' => 'error',
+                        'type' => 'Plugin',
+                        'method' => 'load',
+                        'event' => Plugins::EVENT_PLUGIN_LOADED,
+                    ]
+                );
+            }
+        });
         $performance->stop([], $stopCode);
     }
 
@@ -255,18 +253,18 @@ abstract class AbstractPlugin implements PluginInterface
     }
 
     /**
-     * @throws RuntimeException
+     * @throws UnprocessableException
      */
     final public function __sleep()
     {
-        throw new RuntimeException('Cannot serialize ' . get_class($this));
+        throw new UnprocessableException('Cannot serialize ' . get_class($this));
     }
 
     /**
-     * @throws RuntimeException
+     * @throws UnprocessableException
      */
     final public function __wakeup()
     {
-        throw new RuntimeException('Cannot unserialize ' . get_class($this));
+        throw new UnprocessableException('Cannot unserialize ' . get_class($this));
     }
 }

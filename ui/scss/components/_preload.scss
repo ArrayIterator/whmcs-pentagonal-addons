@@ -44,20 +44,20 @@
     > span {
         z-index:9;
         display: block;
-        width: 8rem;
+        width: 7rem;
         aspect-ratio: 1/1;
         position: absolute;
         border-radius: 50%;
-        border: .5rem solid transparent;
+        border: .4rem solid transparent;
         border-top-color: var(--pentagonal-lime-500);
         animation: pentagonal-loading-spin 1.5s linear infinite forwards;
         & + span {
-            width: 6rem;
+            width: 5rem;
             animation-duration: .8s;
             animation-direction: reverse;
             border-top-color: var(--pentagonal-cyan-500);
             & + span {
-                width: 2.5rem;
+                width: 2rem;
                 animation-duration: .5s;
                 border-color: var(--pentagonal-cyan-500) transparent var(--pentagonal-lime-500);
                 animation-direction: normal;

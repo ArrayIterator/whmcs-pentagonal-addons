@@ -83,7 +83,7 @@ final class Profiler implements JsonSerializable
         $this->groupProfiler = $groupProfiler;
         $this->name = $name;
         $this->data = $data;
-        $this->start = microtime(true);
+        $this->start = microtime(true) * 1000;
         $this->startMemory = memory_get_usage(true);
     }
 
@@ -280,7 +280,7 @@ final class Profiler implements JsonSerializable
      *
      * @return float
      */
-    public function getStart(): float
+    public function getStartTime(): float
     {
         return $this->start;
     }
@@ -290,9 +290,9 @@ final class Profiler implements JsonSerializable
      *
      * @return float
      */
-    public function getEnd(): float
+    public function getEndTime(): float
     {
-        return $this->end??microtime(true);
+        return $this->end??(microtime(true) * 1000);
     }
 
     /**
@@ -338,14 +338,14 @@ final class Profiler implements JsonSerializable
 
         try {
             if (!isset($this->end)) {
-                $this->firstEnded = microtime(true);
+                $this->firstEnded = microtime(true) * 1000;
                 $this->end = $this->firstEnded;
                 $this->elapsed = $this->end - $this->start;
                 $this->endMemory = memory_get_usage(true);
                 return $this;
             }
             if ($force && !$this->isLocked()) {
-                $this->end = microtime(true);
+                $this->end = microtime(true) * 1000;
                 $this->mergeData($data);
                 $this->elapsed = $this->end - $this->start;
                 $this->endMemory = memory_get_usage(true);
@@ -377,12 +377,12 @@ final class Profiler implements JsonSerializable
      *
      * @return float
      */
-    public function getElapsed(): float
+    public function getElapsedTime(): float
     {
         if (isset($this->elapsed)) {
             return $this->elapsed;
         }
-        return $this->getEnd() - $this->getStart();
+        return $this->getEndTime() - $this->getStartTime();
     }
 
     /**
@@ -401,22 +401,36 @@ final class Profiler implements JsonSerializable
 
     /**
      * @return array{
-     *     "name": string,
-     *     "start": float,
-     *     "end": float,
-     *     "startMemory": int,
-     *     "endMemory": int,
-     *     "data": array
-     * }
+     *      "name": "string",
+     *      "memory": array{
+     *           "start" : int,
+     *           "end" : int,
+     *           "usage" : int,
+     *      },
+     *      "time": array{
+     *           "start" : int,
+     *           "end" : int,
+     *           "usage" : int,
+     *      },
+     *      "data": array
+     *  }
      */
     public function jsonSerialize() : array
     {
+        $timeUsage = $this->getElapsedTime();
+        $memoryUsage = $this->getMemoryUsage();
         return [
             'name' => $this->getName(),
-            'start' => $this->getStart(),
-            'end' => $this->getEnd(),
-            'startMemory' => $this->getStartMemory(),
-            'endMemory' => $this->getEndMemory(),
+            'memory' => [
+                'start' => $this->getStartMemory(),
+                'end' => $memoryUsage + $this->getStartMemory(),
+                'usage' => $memoryUsage,
+            ],
+            'time' => [
+                'start' => $this->getStartTime(),
+                'end' => $timeUsage + $this->getStartTime(),
+                'usage' => $timeUsage,
+            ],
             'data' => $this->getData()
         ];
     }

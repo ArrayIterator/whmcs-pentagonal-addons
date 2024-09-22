@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
-use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\HttpRuntimeException;
-use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\OutPutBufferingException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\HttpRuntimeException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\OutPutBufferingException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Factory\StreamFactory;
 use Pentagonal\Neon\WHMCS\Addon\Http\Interfaces\ResponseEmitterInterface;
 use Psr\Http\Message\ResponseInterface;

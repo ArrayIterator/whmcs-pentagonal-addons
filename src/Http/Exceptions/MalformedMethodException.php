@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http\Exceptions;
 
-use RuntimeException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 
-class MalformedMethodException extends RuntimeException
+class MalformedMethodException extends UnprocessableException
 {
 }

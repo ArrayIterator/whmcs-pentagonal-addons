@@ -4,8 +4,8 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 
 use Closure;
-use InvalidArgumentException;
 use JsonSerializable;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers\GroupProfiler;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers\Profiler;
 use WHMCS\Database\Capsule;
@@ -14,6 +14,8 @@ use function is_array;
 use function is_callable;
 use function is_object;
 use function is_string;
+use function memory_get_usage;
+use function microtime;
 use function spl_object_hash;
 use function sprintf;
 
@@ -45,11 +47,23 @@ final class Performance implements JsonSerializable
     private Profiler $dummyProfiler;
 
     /**
+     * @var float $startTime the start time instance
+     */
+    private float $startTime;
+
+    /**
+     * @var int$startMemory the start memory instance
+     */
+    private int $startMemory;
+
+    /**
      * Performance constructor.
      * @private Performance constructor.
      */
     private function __construct()
     {
+        $this->startTime = microtime(true) * 1000;
+        $this->startMemory = memory_get_usage(true);
         $isEnabled = ApplicationConfig::get('display_errors') === true;
         if (!$isEnabled) {
             $value = Capsule::table(Options::TABLE_OPTIONS)
@@ -60,6 +74,50 @@ final class Performance implements JsonSerializable
             }
         }
         $this->enabled = $isEnabled;
+    }
+
+    /**
+     * Get start time
+     *
+     * @return float
+     */
+    public function getStartTime(): float
+    {
+        return $this->startTime;
+    }
+
+    /**
+     * Get starting memory
+     *
+     * @return int
+     */
+    public function getStartMemory() : int
+    {
+        return $this->startMemory;
+    }
+
+    /**
+     * Get memory usage from start benchmarking
+     *
+     * @return int
+     */
+    public function getMemoryUsage() : int
+    {
+        $currentMemory = memory_get_usage(true);
+        $startMemory = $this->getStartMemory();
+        return $currentMemory > $startMemory
+            ? ($currentMemory - $startMemory)
+            : 0;
+    }
+
+    /**
+     * Get elapsed time
+     *
+     * @return float
+     */
+    public function getElapsedTime() : float
+    {
+        return (microtime(true) * 1000) - $this->getStartTime();
     }
 
     /**
@@ -84,7 +142,7 @@ final class Performance implements JsonSerializable
         if ($group instanceof GroupProfiler) {
             return $this->groups[$group->getName()] ??= $group;
         }
-        throw new InvalidArgumentException('Invalid Group');
+        throw new InvalidArgumentCriteriaException('Invalid Group');
     }
 
     /**
@@ -178,7 +236,7 @@ final class Performance implements JsonSerializable
      *
      * @return void
      */
-    public function enable(): void
+    public function setEnable(): void
     {
         $this->enabled = true;
     }
@@ -188,9 +246,29 @@ final class Performance implements JsonSerializable
      *
      * @return void
      */
-    public function disable(): void
+    public function setDisable(): void
     {
         $this->enabled = false;
+    }
+
+    /**
+     * Set enable
+     *
+     * @return void
+     */
+    public static function enable()
+    {
+        self::getInstance()->setEnable();
+    }
+
+    /**
+     * Set disable
+     *
+     * @return void
+     */
+    public static function disable()
+    {
+        self::getInstance()->setDisable();
     }
 
     /**
@@ -286,13 +364,41 @@ final class Performance implements JsonSerializable
         return self::getInstance()->replaceGroup($groupProfiler);
     }
 
+    /**
+     * @return array{
+     *     "memory": array{
+     *          "start" : int,
+     *          "end" : int,
+     *          "usage" : int,
+     *     },
+     *     "time": array{
+     *          "start" : int,
+     *          "end" : int,
+     *          "usage" : int,
+     *     },
+     *     "records": array<array{
+     *          "group": string,
+     *          "name": "string",
+     *          "memory": array{
+     *              "start" : int,
+     *               "end" : int,
+     *               "usage" : int,
+     *           },
+     *           "time": array{
+     *               "start" : int,
+     *               "end" : int,
+     *               "usage" : int,
+     *           },
+     *           "data": array
+     *       }>
+     *  }
+     */
     public function jsonSerialize() : array
     {
         $profilers = [];
         foreach ($this->getGroups() as $group) {
             foreach ($group->getProfilers() as $profiler) {
                 $profiler = ['group' => $group->getName()] + $profiler->jsonSerialize();
-                ;
                 $profiler = DataNormalizer::protectRootDir($profiler);
                 if (isset($profiler['data']) && is_array($profiler['data'])) {
                     foreach ($profiler['data'] as $key => $v) {
@@ -321,8 +427,28 @@ final class Performance implements JsonSerializable
             }
         }
         usort($profilers, function ($a, $b) {
-            return $a['start'] <=> $b['start'];
+            return $a['time']['start'] <=> $b['time']['start'];
         });
-        return $profilers;
+
+        $memoryUsage = $this->getMemoryUsage();
+        $elapsedTime = $this->getElapsedTime();
+        try {
+            return [
+                'memory' => [
+                    'start' => $this->getStartMemory(),
+                    'end' => $this->getStartMemory() + $memoryUsage,
+                    'usage' => $memoryUsage,
+                ],
+                'time' => [
+                    'start' => $this->getStartTime(),
+                    'end' => $elapsedTime + $this->getStartTime(),
+                    'usage' => $elapsedTime,
+                ],
+                'records' => $profilers
+            ];
+        } finally {
+            $profilers = null;
+            unset($profilers);
+        }
     }
 }

@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Abstracts;
 
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\ExtendedInterface;
-use RuntimeException;
 use WHMCS\Application\Support\Facades\Di;
 use function call_user_func_array;
 use function is_object;
@@ -120,7 +120,7 @@ abstract class AbstractExtended implements ExtendedInterface
     public static function getInstance(): AbstractExtended
     {
         if (static::class === __CLASS__) {
-            throw new RuntimeException('Cannot instantiate abstract class ' . __CLASS__);
+            throw new UnprocessableException('Cannot instantiate abstract class ' . __CLASS__);
         }
         return static::$instance ??= new static();
     }

@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
-use InvalidArgumentException;
-use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\FileNotFoundException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\FileNotFoundException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableDataException;
 use Psr\Http\Message\StreamInterface;
 use Throwable;
 use function clearstatcache;
@@ -106,24 +107,24 @@ class Stream implements StreamInterface
 
     /**
      * @param mixed $stream
-     * @throws InvalidArgumentException
+     * @throws InvalidArgumentCriteriaException
      */
     private function assertIsResource($stream): void
     {
         if (!is_resource($stream)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Stream must be a resource'
             );
         }
     }
 
     /**
-     * @throws InvalidArgumentException
+     * @throws UnprocessableDataException
      */
     private function assertDetachedResource($stream): void
     {
         if (!$stream || !is_resource($stream)) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Stream is detached'
             );
         }
@@ -159,7 +160,7 @@ class Stream implements StreamInterface
             if (PHP_VERSION_ID >= 70400) {
                 throw $e;
             }
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 sprintf(
                     '%s::__toString exception: %s',
                     static::class,
@@ -225,7 +226,7 @@ class Stream implements StreamInterface
         $this->assertDetachedResource($this->stream);
         $result = ftell($this->stream);
         if ($result === false) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Unable to determine stream position'
             );
         }
@@ -251,12 +252,12 @@ class Stream implements StreamInterface
     {
         $this->assertDetachedResource($this->stream);
         if (!$this->seekable) {
-            throw new InvalidArgumentException('Stream is not seekable');
+            throw new UnprocessableDataException('Stream is not seekable');
         }
 
         $result = fseek($this->stream, $offset);
         if ($result === -1) {
-            throw new InvalidArgumentException('Unable to determine stream position');
+            throw new UnprocessableDataException('Unable to determine stream position');
         }
     }
 
@@ -275,7 +276,7 @@ class Stream implements StreamInterface
         $this->assertDetachedResource($this->stream);
 
         if (!$this->writable) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Cannot write to a non-writable stream'
             );
         }
@@ -284,7 +285,7 @@ class Stream implements StreamInterface
         $this->size = null;
         $result = fwrite($this->stream, $string);
         if ($result === false) {
-            throw new InvalidArgumentException('Unable to write to stream');
+            throw new UnprocessableDataException('Unable to write to stream');
         }
 
         return $result;
@@ -299,12 +300,12 @@ class Stream implements StreamInterface
     {
         $this->assertDetachedResource($this->stream);
         if (!$this->readable) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Cannot read from non-readable stream'
             );
         }
         if ($length < 0) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Length parameter cannot be negative'
             );
         }
@@ -315,7 +316,7 @@ class Stream implements StreamInterface
         try {
             $string = fread($this->stream, $length);
         } catch (Throwable $e) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Unable to read from stream',
                 0,
                 $e
@@ -323,7 +324,7 @@ class Stream implements StreamInterface
         }
 
         if (false === $string) {
-            throw new InvalidArgumentException('Unable to read from stream');
+            throw new UnprocessableDataException('Unable to read from stream');
         }
 
         return $string;
@@ -332,7 +333,7 @@ class Stream implements StreamInterface
     private function assertContent($content) : string
     {
         if ($content === false) {
-            throw new InvalidArgumentException('Unable to read stream contents');
+            throw new UnprocessableDataException('Unable to read stream contents');
         }
 
         return $content;
@@ -342,14 +343,14 @@ class Stream implements StreamInterface
     {
         $this->assertDetachedResource($this->stream);
         if (!$this->readable) {
-            throw new InvalidArgumentException(
+            throw new UnprocessableDataException(
                 'Cannot read from non-readable stream'
             );
         }
 
         $ex = null;
         set_error_handler(static function (int $errno, string $errStr) use (&$ex) : bool {
-            $ex = new InvalidArgumentException(sprintf(
+            $ex = new UnprocessableDataException(sprintf(
                 'Unable to read stream contents: %s',
                 $errStr
             ));
@@ -360,7 +361,7 @@ class Stream implements StreamInterface
         try {
             return $this->assertContent(stream_get_contents($this->stream));
         } catch (Throwable $e) {
-            $ex = new InvalidArgumentException(sprintf(
+            $ex = new UnprocessableDataException(sprintf(
                 'Unable to read stream contents: %s',
                 $e->getMessage()
             ), 0, $e);

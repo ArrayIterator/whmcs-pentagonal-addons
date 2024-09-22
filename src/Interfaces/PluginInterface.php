@@ -13,7 +13,8 @@ interface PluginInterface
      * PluginInterface constructor.
      * @param Plugins $plugins
      * @param Plugin $schema
-     * @throw RuntimeException if schema namespace not equal plugin namespace
+     * @throws \Pentagonal\Neon\WHMCS\Addon\Exceptions\UnsupportedArgumentDataTypeException
+     * @noinspection PhpFullyQualifiedNameUsageInspection
      */
     public function __construct(Plugins $plugins, Plugin $schema);
 

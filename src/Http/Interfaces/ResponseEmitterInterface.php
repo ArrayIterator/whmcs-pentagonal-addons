@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http\Interfaces;
 
+use Pentagonal\Neon\WHMCS\Addon\Interfaces\ThrowableInterface;
 use Psr\Http\Message\ResponseInterface;
 
-interface ResponseEmitterInterface
+interface ResponseEmitterInterface extends ThrowableInterface
 {
     /**
      * Emit the response

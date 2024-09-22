@@ -1,0 +1,10 @@
+@import "./variables/base";
+
+// --------------------------------------------------------
+// GRAPES JS
+// --------------------------------------------------------
+.gjs-section {
+    @import "grapesjs/src/styles/scss/main";
+}
+#{$selector-identity} {
+}

@@ -372,7 +372,8 @@ final class Hooks implements HooksInterface
                 $em->apply(self::EVENT_BEFORE_HOOKS_INIT, $this);
             } catch (Throwable $e) {
                 Logger::error($e, [
-                    'type' => 'Hook',
+                    'status' => 'error',
+                    'type' => 'Hooks',
                     'method' => 'init',
                     'event' => self::EVENT_BEFORE_HOOKS_INIT
                 ]);
@@ -398,7 +399,8 @@ final class Hooks implements HooksInterface
                 StaticInclude::include($hooksFile, ['hooks' => $this]);
             } catch (Throwable $e) {
                 Logger::error($e, [
-                    'type' => 'Hook',
+                    'status' => 'error',
+                    'type' => 'Hooks',
                     'method' => 'init',
                     'file' => $hooksFile
                 ]);
@@ -406,6 +408,7 @@ final class Hooks implements HooksInterface
                     $em->apply(self::EVENT_ERROR_HOOKS_INIT, $this);
                 } catch (Throwable $e) {
                     Logger::error($e, [
+                        'status' => 'error',
                         'type' => 'Hook',
                         'method' => 'init',
                         'event' => self::EVENT_ERROR_HOOKS_INIT
@@ -422,7 +425,8 @@ final class Hooks implements HooksInterface
                 $em->apply(self::EVENT_AFTER_HOOKS_INIT, $this);
             } catch (Throwable $e) {
                 Logger::error($e, [
-                    'type' => 'Hook',
+                    'status' => 'error',
+                    'type' => 'Hooks',
                     'method' => 'init',
                     'event' => self::EVENT_AFTER_HOOKS_INIT
                 ]);

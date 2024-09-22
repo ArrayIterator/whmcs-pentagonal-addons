@@ -160,7 +160,8 @@ class EventManager implements EventManagerInterface
                     $param = $callback($param, ...$args);
                 } catch (Throwable $e) {
                     Logger::error($e, [
-                        'type' => 'event',
+                        'status' => 'error',
+                        'type' => 'Event',
                         'method' => 'apply',
                         'event' => $name,
                         'callback' => $callback
@@ -177,8 +178,8 @@ class EventManager implements EventManagerInterface
                 }
             } while ($listeners->next() !== false);
 
-            if (count($listeners[$name]) === 0) {
-                unset($listeners[$name]);
+            if (count($this->listeners[$name]) === 0) {
+                unset($this->listeners[$name]);
             }
             if (isset($this->originalParams[$name])) {
                 array_pop($this->originalParams[$name]);

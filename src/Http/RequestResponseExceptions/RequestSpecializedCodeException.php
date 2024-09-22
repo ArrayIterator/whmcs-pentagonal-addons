@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http\RequestResponseExceptions;
 
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\HttpException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Code;
-use Pentagonal\Neon\WHMCS\Addon\Http\Exceptions\HttpException;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 use function sprintf;

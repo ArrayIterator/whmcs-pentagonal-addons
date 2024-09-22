@@ -11,6 +11,7 @@ use Pentagonal\Neon\WHMCS\Addon\Http\HttpFactory;
 use Pentagonal\Neon\WHMCS\Addon\Http\ServerRequest;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
+use Pentagonal\Neon\WHMCS\Addon\Libraries\SmartyAdmin;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\ThemeOptions;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\Url;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Schemas;
@@ -21,6 +22,7 @@ use WHMCS\Application;
 use WHMCS\View\Template\Theme;
 use function array_shift;
 use function debug_backtrace;
+use function run_hook;
 use const DEBUG_BACKTRACE_IGNORE_ARGS;
 use const DIRECTORY_SEPARATOR;
 
@@ -103,6 +105,11 @@ final class Core
      * @var ThemeOptions $themeOptions the theme options
      */
     private ThemeOptions $themeOptions;
+
+    /**
+     * @var SmartyAdmin $smartyAdmin the smarty
+     */
+    private SmartyAdmin $smartyAdmin;
 
     /**
      * @var Admin|null|false;
@@ -289,6 +296,24 @@ final class Core
     }
 
     /**
+     * Get the smarty object
+     *
+     * @return SmartyAdmin
+     */
+    public function getSmartyAdmin(): SmartyAdmin
+    {
+        if (isset($this->smartyAdmin)) {
+            return $this->smartyAdmin;
+        }
+        $this->smartyAdmin = new SmartyAdmin(
+            $this,
+            $this->getAddon()->getAddonDirectory() . '/templates'
+        );
+        $this->smartyAdmin->admin = $this->getWhmcsAdmin();
+        return $this->smartyAdmin;
+    }
+
+    /**
      * Dispatch the core
      */
     public function dispatch() : self
@@ -307,6 +332,15 @@ final class Core
             ->setStopCode($stopCode);
         $em = $this->getEventManager();
         Logger::debug('Dispatching Core');
+        Logger::error(
+            new \Exception('saa'),
+            [
+                'status' => 'error',
+                'type' => 'Core',
+                'method' => 'dispatch',
+                'event' => self::EVENT_BEFORE_CORE_DISPATCH,
+            ]
+        );
         $this->dispatched = true;
         try {
             try {
@@ -316,11 +350,13 @@ final class Core
                     $e,
                     [
                         'status' => 'error',
+                        'type' => 'Core',
                         'method' => 'dispatch',
                         'event' => self::EVENT_BEFORE_CORE_DISPATCH,
                     ]
                 );
             }
+            $this->runDispatchSystemHook($stopCode);
             $this->runServices($stopCode);
             $this->runHooks($stopCode);
         } finally {
@@ -331,6 +367,7 @@ final class Core
                     $e,
                     [
                         'status' => 'error',
+                        'type'  => 'Core',
                         'method' => 'dispatch',
                         'event' => self::EVENT_AFTER_CORE_DISPATCH,
                     ]
@@ -346,6 +383,28 @@ final class Core
      * @param string $stopCode
      * @return void
      */
+    private function runDispatchSystemHook(string $stopCode)
+    {
+        $performance = Performance::profile('core_dispatch_system_hook', 'system.core')
+            ->setStopCode($stopCode);
+        try {
+            run_hook('PentagonalCoreDispatch', $this, false);
+        } catch (Throwable $e) {
+            Logger::error($e, [
+                'status' => 'error',
+                'type' => 'Service',
+                'method' => 'run',
+            ]);
+        } finally {
+            $performance->stop([], $stopCode);
+        }
+    }
+
+    /**
+     * Run the services
+     * @param string $stopCode
+     * @return void
+     */
     private function runServices(string $stopCode)
     {
         $performance = Performance::profile('core_dispatch_services', 'system.core')
@@ -354,7 +413,8 @@ final class Core
             $this->getServices()->run();
         } catch (Throwable $e) {
             Logger::error($e, [
-                'type' => 'service',
+                'status' => 'error',
+                'type' => 'Service',
                 'method' => 'run',
             ]);
         } finally {
@@ -375,7 +435,8 @@ final class Core
             $this->getHooks()->run();
         } catch (Throwable $e) {
             Logger::error($e, [
-                'type' => 'service',
+                'status' => 'error',
+                'type' => 'Service',
                 'method' => 'run',
             ]);
         } finally {

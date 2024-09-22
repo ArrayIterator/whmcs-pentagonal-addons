@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Http;
 
-use InvalidArgumentException;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Http\Traits\HttpAssertionTrait;
 use Pentagonal\Neon\WHMCS\Addon\Http\Traits\HttpStreamHelperTrait;
 use Psr\Http\Message\RequestInterface;
@@ -92,7 +92,7 @@ class Request extends Message implements RequestInterface
     public function withRequestTarget($requestTarget) : self
     {
         if (preg_match('#\s#', $requestTarget)) {
-            throw new InvalidArgumentException(
+            throw new InvalidArgumentCriteriaException(
                 'Invalid request target provided; cannot contain whitespace'
             );
         }

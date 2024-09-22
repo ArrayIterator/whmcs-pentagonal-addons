@@ -1,12 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Pentagonal\Neon\WHMCS\Addon\Http\Interfaces;
+namespace Pentagonal\Neon\WHMCS\Addon\Interfaces;
 
 use Psr\Http\Message\ServerRequestInterface;
-use Throwable;
 
-interface HttpExceptionInterface extends Throwable
+interface HttpExceptionInterface extends ThrowableInterface
 {
     /**
      * Get request

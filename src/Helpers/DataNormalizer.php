@@ -9,11 +9,18 @@ use function explode;
 use function get_object_vars;
 use function implode;
 use function is_array;
+use function is_iterable;
 use function is_object;
 use function is_string;
+use function iterator_to_array;
+use function ob_end_clean;
+use function ob_get_length;
+use function ob_get_level;
+use function ob_start;
 use function preg_quote;
 use function preg_replace;
 use function realpath;
+use function sprintf;
 use function str_contains;
 use function str_replace;
 use const ROOTDIR;
@@ -266,5 +273,48 @@ class DataNormalizer
     public static function makeUnixSeparator(string $path) : string
     {
         return preg_replace('~[\\\/]+~', '/', $path);
+    }
+
+    /**
+     * Clear buffer
+     *
+     * @param int $previousLevel
+     * @return void
+     */
+    public static function clearBuffer(int $previousLevel) : void
+    {
+        while ($previousLevel >= 0 && ob_get_level() > $previousLevel) {
+            ob_end_clean();
+        }
+        if ($previousLevel > 0 && ob_get_level() < 1) {
+            ob_start();
+        }
+    }
+
+    /**
+     * @param callable $callback
+     * @param ...$arguments
+     * @return mixed
+     */
+    public static function bufferedCall(callable $callback, ...$arguments)
+    {
+        $level = ob_get_level();
+        ob_start();
+        try {
+            $callback = $callback(...$arguments);
+        } finally {
+            if ($level < ob_get_level()) {
+                self::clearBuffer($level);
+            } elseif ($level > ob_get_level()) {
+                if (ob_get_length() > 0 && ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                ob_start();
+            } elseif (ob_get_length() > 0 && ob_get_level() > 0) {
+                ob_end_clean();
+                ob_start();
+            }
+        }
+        return $callback;
     }
 }

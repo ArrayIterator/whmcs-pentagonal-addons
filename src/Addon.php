@@ -75,6 +75,7 @@ final class Addon
         'description' => 'Addon to help missing features in Pentagonal WHMCS Products',
         'version' => self::VERSION,
         'author' => 'Pentagonal',
+        'language' => 'english',
     ];
 
     /**
@@ -458,7 +459,8 @@ final class Addon
             Logger::error(
                 $e,
                 [
-                    'type' => 'addon',
+                    'status' => 'error',
+                    'type' => 'Addon',
                     'method' => 'activate',
                     'module' => $module
                 ]

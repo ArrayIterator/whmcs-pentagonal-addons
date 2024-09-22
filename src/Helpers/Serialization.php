@@ -3,14 +3,28 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers;
 
+use Closure;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableDataException;
+use ReflectionFunction;
 use RuntimeException;
+use stdClass;
 use Throwable;
+use function array_map;
+use function array_shift;
+use function get_class;
+use function implode;
 use function is_array;
+use function is_callable;
+use function is_iterable;
 use function is_object;
 use function is_string;
+use function iterator_to_array;
+use function json_encode;
 use function preg_match;
+use function restore_error_handler;
 use function serialize;
 use function set_error_handler;
+use function sprintf;
 use function strlen;
 use function strpos;
 use function substr;
@@ -117,7 +131,7 @@ final class Serialization
         if (self::isSerialized($original)) {
             try {
                 set_error_handler(static function ($errNo, $errStr) {
-                    throw new RuntimeException($errStr, $errNo);
+                    throw new UnprocessableDataException($errStr, $errNo);
                 });
                 return unserialize($original);
             } catch (Throwable $e) {
@@ -155,5 +169,89 @@ final class Serialization
         }
 
         return $data;
+    }
+
+    /**
+     * Safe serialize
+     *
+     * @param $data
+     * @return mixed
+     */
+    public static function safeSerialize($data)
+    {
+        $convertCallable = function ($callable) {
+            if ($callable instanceof Closure) {
+                $ref = new ReflectionFunction($callable);
+                $closureThis = $ref->getClosureThis();
+                $parameterNames = array_map(function ($param) {
+                    return '$'.$param->getName();
+                }, $ref->getParameters());
+                if ($closureThis) {
+                    return sprintf('Closure->call(%s, %s)', get_class($closureThis), implode(', ', $parameterNames));
+                }
+                return 'Closure('.implode(', ', $parameterNames).')';
+            }
+            $className = is_object($callable) ? get_class($callable) : null;
+            if (!is_callable($callable)) {
+                return $callable;
+            }
+            if (is_object($callable)) {
+                return sprintf('%s->__invoke()', $className);
+            }
+            if (is_array($callable)) {
+                $callback = array_shift($callable);
+                $method = array_shift($callable);
+                if (is_object($callback)) {
+                    return sprintf('%s->%s', get_class($callback), $method);
+                }
+                return sprintf('%s::%s', $callback, $method);
+            }
+            return $callable;
+        };
+        $succeedSerialize = function ($data) {
+            set_error_handler(function ($errNum, $errStr) {
+                throw new UnprocessableDataException($errStr, $errNum);
+            });
+            try {
+                serialize($data);
+                return true;
+            } catch (Throwable $e) {
+                return false;
+            } finally {
+                restore_error_handler();
+            }
+        };
+        $convertData = function ($data) use (&$convertData, $convertCallable, $succeedSerialize) {
+            if ($data instanceof stdClass) {
+                $data = clone $data;
+                foreach ((array) $data as $key => $item) {
+                    if (is_iterable($item) || !is_callable($item)) {
+                        $data[$key] = $convertData($item);
+                        continue;
+                    }
+                    $data[$key] = $convertCallable($item);
+                }
+                return $data;
+            }
+            if (is_iterable($data)) {
+                $data = is_array($data) ? $data : iterator_to_array($data);
+                foreach ($data as $key => $v) {
+                    if (is_iterable($v) || !is_callable($v)) {
+                        $data[$key] = $convertData($v);
+                        continue;
+                    }
+                    $data[$key] = $convertCallable($v);
+                }
+                return $data;
+            }
+            if (is_object($data)) {
+                if ($succeedSerialize($data)) {
+                    return $data;
+                }
+                return json_encode($data);
+            }
+            return $data;
+        };
+        return self::shouldSerialize($convertData($data));
     }
 }

@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Pentagonal\Neon\WHMCS\Addon\Http\Exceptions;
+namespace Pentagonal\Neon\WHMCS\Addon\Exceptions;
 
-use Pentagonal\Neon\WHMCS\Addon\Http\Interfaces\HttpExceptionInterface;
+use Pentagonal\Neon\WHMCS\Addon\Interfaces\HttpExceptionInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use RuntimeException;
 use Throwable;

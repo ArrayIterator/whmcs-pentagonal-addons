@@ -1,14 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace Pentagonal\Neon\WHMCS\Addon\Http\Exceptions;
+namespace Pentagonal\Neon\WHMCS\Addon\Exceptions;
 
 use Pentagonal\Neon\WHMCS\Addon\Http\Factory\StreamFactory;
 use Psr\Http\Message\StreamInterface;
-use RuntimeException;
 use Throwable;
 
-class OutPutBufferingException extends RuntimeException
+class OutPutBufferingException extends UnprocessableDataException
 {
     protected StreamInterface $stream;
 

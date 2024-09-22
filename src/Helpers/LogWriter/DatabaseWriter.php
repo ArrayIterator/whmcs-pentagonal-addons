@@ -4,20 +4,25 @@ declare(strict_types=1);
 namespace Pentagonal\Neon\WHMCS\Addon\Helpers\LogWriter;
 
 use Monolog\Logger;
+use PDO;
+use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Options;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
+use Pentagonal\Neon\WHMCS\Addon\Helpers\Serialization;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\LogWriterInterface;
-use RuntimeException;
 use Throwable;
 use WHMCS\Database\Capsule;
+use function array_change_key_case;
 use function in_array;
 use function is_array;
 use function is_int;
 use function is_numeric;
 use function is_string;
-use function serialize;
+use function restore_error_handler;
 use function set_error_handler;
+use function sprintf;
 use function strtolower;
+use const CASE_LOWER;
 
 class DatabaseWriter implements LogWriterInterface
 {
@@ -46,12 +51,17 @@ class DatabaseWriter implements LogWriterInterface
     /**
      * @var string TABLE_NAME the table name
      */
-    public const TABLE_NAME = 'pentagonal_record_logs';
+    public const TABLE_NAME = 'pentagonal_logs';
 
     /**
      * @var int CLEAN_LOG_COUNT the clean log count if more than 100K
      */
     public const CLEAN_LOG_COUNT = 100000;
+
+    /**
+     * @var int MAX_DUPLICATION_CLEAN maximum clean
+     */
+    public const MAX_DUPLICATION_CLEAN = 5000;
 
     /**
      * Queue the log
@@ -86,6 +96,37 @@ class DatabaseWriter implements LogWriterInterface
     private int $limitLogRecords = self::CLEAN_LOG_COUNT;
 
     /**
+     * @var array|string[] $columns
+     */
+    private array $columns = [
+        'id',
+        'level',
+        'hash',
+        'message',
+        'context',
+        'extra',
+        'timestamp'
+    ];
+
+    private function createSchema() : void
+    {
+        Capsule::schema()->create(self::TABLE_NAME, function ($table) {
+            /**
+             * @var \Illuminate\Database\Schema\Blueprint $table
+             * @noinspection PhpFullyQualifiedNameUsageInspection
+             */
+            $table->bigIncrements('id')->unsigned();
+            $table->integer('level');
+            $table->string('hash', 32);
+            $table->binary('message');
+            $table->binary('context')->nullable();
+            $table->binary('extra')->nullable();
+            $table->integer('timestamp', false, true);
+            $table->index(['hash'], 'hash_log_index');
+        });
+    }
+
+    /**
      * @return void
      */
     private function init(): void
@@ -93,22 +134,52 @@ class DatabaseWriter implements LogWriterInterface
         if ($this->initialized) {
             return;
         }
+
         $this->initialized = true;
         $performance = Performance::profile('init', 'system.database_writer');
         try {
             // do something
             if (!Capsule::schema()->hasTable(self::TABLE_NAME)) {
-                Capsule::schema()->create(self::TABLE_NAME, function ($table) {
+                $this->createSchema();
+            } else {
+                Capsule::schema()->table(self::TABLE_NAME, function ($table) {
                     /**
                      * @var \Illuminate\Database\Schema\Blueprint $table
                      * @noinspection PhpFullyQualifiedNameUsageInspection
                      */
-                    $table->bigIncrements('id')->unsigned();
-                    $table->integer('level');
-                    $table->text('message');
-                    $table->text('context')->nullable();
-                    $table->text('extra')->nullable();
-                    $table->integer('timestamp', false, true);
+                    $pdo = Capsule::connection()->getPdo();
+                    $stmt = $pdo->query(sprintf('SHOW COLUMNS FROM `%s`', self::TABLE_NAME));
+                    $contains = false;
+                    try {
+                        $columns = [];
+                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                            $row = array_change_key_case($row, CASE_LOWER);
+                            $columns[strtolower($row['field'])] = $row['field'];
+                        }
+                        $stmt->closeCursor();
+                        foreach ($this->columns as $column) {
+                            if (!isset($columns[$column])) {
+                                Capsule::schema()->drop(self::TABLE_NAME);
+                                $this->createSchema();
+                                return;
+                            }
+                        }
+                        $stmt = $pdo->query(sprintf('SHOW INDEX FROM `%s`', self::TABLE_NAME));
+                        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                            $row = array_change_key_case($row, CASE_LOWER);
+                            if (strtolower($row['column_name']??'') === 'hash') {
+                                $contains = true;
+                                break;
+                            }
+                        }
+                        $stmt->closeCursor();
+                    } catch (Throwable $e) {
+                        return;
+                    }
+                    if ($contains) {
+                        return;
+                    }
+                    $table->index(['hash'], 'hash_log_index');
                 });
             }
             if (!Options::has(self::ENABLE_OPTION_NAME)) {
@@ -225,17 +296,19 @@ class DatabaseWriter implements LogWriterInterface
             while ($record = array_shift($this->queue)) {
                 try {
                     set_error_handler(static function ($errNo, $errStr) {
-                        throw new RuntimeException($errStr, $errNo);
+                        throw new UnprocessableException($errStr, $errNo);
                     });
                     $record['context'] = $record['context'] !== null
-                        ? serialize($record['context'])
+                        ? Serialization::safeSerialize($record['context'])
                         : null;
                     $record['extra'] = $record['extra'] !== null
-                        ? serialize($record['extra'])
+                        ? Serialization::safeSerialize($record['extra'])
                         : null;
                 } catch (Throwable $e) {
                     $record['context'] = null;
                     $record['extra'] = null;
+                } finally {
+                    restore_error_handler();
                 }
                 $record['context'] = $record['context'] === null || is_string($record['context'])
                     ? $record['context']
@@ -249,6 +322,7 @@ class DatabaseWriter implements LogWriterInterface
                     'context' => $record['context'],
                     'extra' => $record['extra'],
                     'timestamp' => time(),
+                    'hash' => md5($record['message'] . $record['level'])
                 ];
                 $record = null;
                 unset($record); // free memory
@@ -273,6 +347,57 @@ class DatabaseWriter implements LogWriterInterface
         } finally {
             $performance->stop();
         }
+    }
+
+    /**
+     * Truncate table
+     *
+     * @return void
+     */
+    public function emptyTable()
+    {
+        Capsule::table(self::TABLE_NAME)->truncate();
+    }
+
+    /**
+     * @param int $limit
+     * @param int $timeCheck in seconds compare of same hash checking
+     * @return bool
+     */
+    public function cleanDuplicates(int $limit = 500, int $timeCheck = 3600) : bool
+    {
+        if ($limit < 1) {
+            return true;
+        }
+        $timeCheck = max($timeCheck, 60);
+        $limit = min(self::MAX_DUPLICATION_CLEAN, $limit);
+        $tableName = self::TABLE_NAME;
+        $sql = <<<SQL
+DELETE
+    t1
+FROM
+    `$tableName` AS t1
+JOIN (
+        SELECT t2.* FROM
+    `$tableName` AS t1,
+    `$tableName` AS t2
+    WHERE
+        (
+            t1.hash = t2.hash AND t1.id < t2.id AND (
+                t1.timestamp = t2.timestamp OR(
+                    CAST(
+                        (
+                            CAST(t2.timestamp AS SIGNED) - CAST(t1.timestamp AS SIGNED)
+                        ) AS SIGNED
+                    ) < $timeCheck
+                )
+            )
+        )
+    LIMIT $limit
+    ) AS t2 ON t1.id = t2.id
+SQL;
+
+        return Capsule::connection()->statement($sql);
     }
 
     /**
@@ -309,7 +434,6 @@ class DatabaseWriter implements LogWriterInterface
             'context' => $context,
             'extra' => $extra,
         ];
-
         if (count($this->queue) >= self::MAX_QUEUE) {
             $this->saveDatabase();
         }
