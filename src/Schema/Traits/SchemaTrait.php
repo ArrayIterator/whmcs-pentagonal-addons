@@ -148,6 +148,26 @@ trait SchemaTrait
     }
 
     /**
+     * Create schema reference
+     *
+     * @param string $className
+     * @return \Swaggest\JsonSchema\SchemaContract&ObjectItemContract
+     * @noinspection PhpFullyQualifiedNameUsageInspection
+     */
+    public function createSchemaByReferenceClassName(string $className)
+    {
+        $performance = Performance::profile('schema_reference', 'system.schema')
+            ->setData([
+                'class' => $className
+            ]);
+        try {
+            return \Pentagonal\Hub\Schema::createSchemaReference($className);
+        } finally {
+            $performance->stop();
+        }
+    }
+
+    /**
      * @inheritDoc
      */
     public function getRefSchema(): ?ObjectItemContract

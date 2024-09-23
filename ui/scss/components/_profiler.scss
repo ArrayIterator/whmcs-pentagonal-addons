@@ -1,0 +1,303 @@
+// ------------------------------------------------------
+// PROFILER / DEBUG BAR
+// ------------------------------------------------------
+@import "../variables/colors";
+
+#{$selector-div} {
+    .pentagonal-debug-bar {
+        position: fixed;
+        z-index: 12345;
+        max-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        width: auto;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        box-sizing: border-box;
+        background-color: var(--pentagonal-gray-700, #{$color-gray-700});
+        color: var(--pentagonal-gray-100, #{$color-gray-100});
+
+        svg {
+            color: var(--pentagonal-gray-100, #{$color-gray-100});
+            fill: var(--pentagonal-gray-100, #{$color-gray-100});
+        }
+    }
+
+    .pentagonal-debug-bar-wrapper {
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 100%;
+        height: 100%;
+    }
+
+    body:has(.pentagonal-debug-bar.pentagonal-debug-bar-resizing) {
+        cursor: ns-resize;
+        user-select: none;
+    }
+
+    .pentagonal-debug-spacer {
+        position: absolute;
+        display: flex;
+        flex: 0 0 4px;
+        height: 4px;
+        width: 100%;
+        background-color: transparent;
+        top: 0;
+    }
+
+    .pentagonal-debug-header {
+        & {
+            height: 2.5rem;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            flex: 0 0 2.5rem;
+            width: 100%;
+            background-color: var(--pentagonal-gray-800, #{$color-gray-800});
+            overflow: hidden;
+        }
+
+        svg {
+            width: 1.3rem;
+            height: 1.3rem;
+        }
+
+        .pentagonal-debug-header-title {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            justify-content: center;
+            flex: 0 0 3rem;
+            height: 100%;
+            font-size: .75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .15em;
+            margin-left: 0;
+            width: 3rem;
+            background-color: var(--pentagonal-gray-900, #{$color-gray-900});
+
+            svg {
+                width: 1.5rem;
+                height: 1.5rem;
+            }
+        }
+
+        .pentagonal-debug-header-info {
+            & {
+                margin-left: 1rem;
+                font-size: .8rem;
+                flex: 0 1 100%;
+            }
+
+            .pentagonal-debug-header-icon {
+                margin-right: .5rem;
+            }
+
+            .pentagonal-debug-header-info-item {
+                margin: 0 .25rem;
+            }
+
+            &, & > div {
+                display: flex;
+                align-items: center;
+                flex-direction: row;
+            }
+        }
+    }
+
+    .pentagonal-debug-bar-content {
+        overflow: auto;
+        scrollbar-width: none;
+    }
+
+    .pentagonal-debug-header-action {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        flex: 0 0 auto;
+        height: 100%;
+    }
+
+    .pentagonal-debug-bar-action-item {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        height: 100%;
+        padding: 0 .5rem;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--pentagonal-gray-900, #{$color-gray-900});
+        }
+    }
+
+    [data-status="maximized"] {
+        &.pentagonal-debug-bar {
+            height: 100vh;
+            max-height: 100vh;
+            flex: 0 0 100%;
+        }
+
+        .action-up,
+        .action-maximize {
+            display: none;
+        }
+    }
+
+    [data-status="closed"] {
+        .action-down,
+        .action-minimize {
+            display: none;
+        }
+
+        .pentagonal-debug-bar-content {
+            display: none;
+        }
+    }
+
+    [data-status="opened"] {
+        &.pentagonal-debug-bar {
+            height: 300px;
+            flex: 0 1 300px;
+        }
+
+        .pentagonal-debug-spacer {
+            cursor: ns-resize;
+        }
+
+        .action-minimize,
+        .action-up {
+            display: none;
+        }
+    }
+
+    .pentagonal-debug-record-items {
+        > :nth-child(even) {
+            background-color: rgba(255, 255, 255, .1);
+        }
+    }
+
+    .pentagonal-debug-record-header {
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        background-color: var(--pentagonal-gray-800, #{$color-gray-800});
+        z-index: 99;
+        .pentagonal-debug-record-header-search {
+            background-color: rgba(0,0,0,.1);
+            padding: .5rem;
+            input {
+                background-color: rgba(0,0,0,.15);
+                color: var(--pentagonal-gray-100, #{$color-gray-100});
+                border: 1px solid rgba(0,0,0,.2);
+                padding: .2rem .5rem;
+                width: 300px;
+                font-size: .8rem;
+                font-weight: 400;
+                //height: 1.6rem;
+                border-radius: .2rem;
+                &:focus {
+                    outline: none;
+                    background-color: rgba(0,0,0,.3);
+                }
+                &::placeholder {
+                    color: var(--pentagonal-gray-400, #{$color-gray-400});
+                }
+            }
+        }
+    }
+    .pentagonal-debug-record-header-container,
+    .pentagonal-debug-record-log {
+        & {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            padding: .5rem;
+            font-size: .85rem;
+            font-weight: 400;
+        }
+
+        > div {
+            display: flex;
+            align-items: center;
+            flex: 0 1 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .pentagonal-debug-record-group {
+            flex: 0 0 200px;
+        }
+
+        .pentagonal-debug-record-name {
+            flex: 0 0 200px;
+        }
+
+        .pentagonal-debug-record-usage {
+            flex: 0 0 100px;
+        }
+
+        .pentagonal-debug-record-time {
+            & {
+                display: flex;
+                align-items: center;
+            }
+
+            .pentagonal-debug-record-time-bar {
+                position: relative;
+                display: flex;
+                height: .4rem;
+                border-radius: .1rem;
+                font-size: 0;
+                background-color: rgba(0, 0, 0, .1);
+                min-width: .25%;
+            }
+
+            [data-status-bar="success"] {
+                background-color: var(--pentagonal-success-color, #{$color-lime-500});
+            }
+
+            [data-status-bar="warning"] {
+                background-color: var(--pentagonal-warning-color, #{$color-yellow-500});
+            }
+
+            [data-status-bar="info"] {
+                background-color: var(--pentagonal-info-color, #{$color-blue-500});
+            }
+
+            [data-status-bar="danger"] {
+                background-color: var(--pentagonal-danger-color, #{$color-red-500});
+            }
+        }
+    }
+    .pentagonal-debug-record {
+        .pentagonal-debug-record-log {
+            cursor: pointer;
+        }
+        .pentagonal-debug-record-data {
+            display: none;
+            pre {
+                background-color: rgba(0, 0, 0, .2);
+                color: var(--pentagonal-gray-100, #{$color-gray-100});
+                font-size: .75em;
+                border-color: var(--pentagonal-gray-800, #{$color-gray-800});
+                border-radius: 0;
+                margin: 0;
+            }
+        }
+        &.active {
+            .pentagonal-debug-record-data {
+                display: block;
+            }
+        }
+    }
+}
+
+//[data-status="open"] .action-down {
+//    display: none;
+//}

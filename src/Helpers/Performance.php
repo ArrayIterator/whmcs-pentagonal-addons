@@ -14,6 +14,7 @@ use function is_array;
 use function is_callable;
 use function is_object;
 use function is_string;
+use function memory_get_peak_usage;
 use function memory_get_usage;
 use function microtime;
 use function spl_object_hash;
@@ -56,6 +57,8 @@ final class Performance implements JsonSerializable
      */
     private int $startMemory;
 
+    private int $startPeakMemory;
+
     /**
      * Performance constructor.
      * @private Performance constructor.
@@ -64,6 +67,8 @@ final class Performance implements JsonSerializable
     {
         $this->startTime = microtime(true) * 1000;
         $this->startMemory = memory_get_usage(true);
+        $this->startPeakMemory = memory_get_peak_usage(true);
+
         $isEnabled = ApplicationConfig::get('display_errors') === true;
         if (!$isEnabled) {
             $value = Capsule::table(Options::TABLE_OPTIONS)
@@ -370,6 +375,8 @@ final class Performance implements JsonSerializable
      *          "start" : int,
      *          "end" : int,
      *          "usage" : int,
+     *          "peak_start" : int,
+     *          "peak_end" : int,
      *     },
      *     "time": array{
      *          "start" : int,
@@ -383,6 +390,8 @@ final class Performance implements JsonSerializable
      *              "start" : int,
      *               "end" : int,
      *               "usage" : int,
+     *               "peak_start" : int,
+     *               "peak_end" : int,
      *           },
      *           "time": array{
      *               "start" : int,
@@ -438,6 +447,8 @@ final class Performance implements JsonSerializable
                     'start' => $this->getStartMemory(),
                     'end' => $this->getStartMemory() + $memoryUsage,
                     'usage' => $memoryUsage,
+                    'peak_start' => $this->startPeakMemory,
+                    'peak_end' => memory_get_peak_usage(true),
                 ],
                 'time' => [
                     'start' => $this->getStartTime(),

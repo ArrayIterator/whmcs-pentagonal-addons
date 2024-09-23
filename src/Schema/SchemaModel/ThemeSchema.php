@@ -40,7 +40,7 @@ class ThemeSchema implements ThemeSchemaInterface
      */
     public function getRefSchema(): ?ObjectItemContract
     {
-        return $this->refSchema ??= Schema::createSchemaReference(Theme::class);
+        return $this->refSchema ??= $this->createSchemaByReferenceClassName(Theme::class);
     }
 
     /**

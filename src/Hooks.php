@@ -379,7 +379,6 @@ final class Hooks implements HooksInterface
                     hook_log('Pentagonal', 'Error Before Hooks Init: ' . $e->getMessage());
                 }
             }
-
             $themeHook = $this->getCore()->getSchemas()->get(ThemeSchema::class);
             if (!$themeHook instanceof ThemeSchema || !$themeHook->isValid()) {
                 return;

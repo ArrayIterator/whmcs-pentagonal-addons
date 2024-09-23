@@ -6,6 +6,7 @@ namespace Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers;
 
 use JsonSerializable;
 use function array_merge_recursive;
+use function memory_get_peak_usage;
 use function memory_get_usage;
 use function microtime;
 
@@ -32,9 +33,19 @@ final class Profiler implements JsonSerializable
     private int $endMemory;
 
     /**
-     * @var int $usedMemory the used memory
+     * @var int $memoryUsage the used memory
      */
-    private int $usedMemory;
+    private int $memoryUsage;
+
+    /**
+     * @var int $startPeakMemory the memory peak start
+     */
+    private int $startPeakMemory;
+
+    /**
+     * @var int $endPeakMemory the memory peak end
+     */
+    private int $endPeakMemory;
 
     /**
      * @var float $start the start time
@@ -85,6 +96,7 @@ final class Profiler implements JsonSerializable
         $this->data = $data;
         $this->start = microtime(true) * 1000;
         $this->startMemory = memory_get_usage(true);
+        $this->startPeakMemory = memory_get_peak_usage(true);
     }
 
     /**
@@ -312,6 +324,26 @@ final class Profiler implements JsonSerializable
     }
 
     /**
+     * Get start peak memory
+     *
+     * @return int
+     */
+    public function getStartPeakMemory(): int
+    {
+        return $this->startPeakMemory;
+    }
+
+    /**
+     * Get end peak memory
+     *
+     * @return int
+     */
+    public function getEndPeakMemory(): int
+    {
+        return $this->endPeakMemory??memory_get_peak_usage(true);
+    }
+
+    /**
      * Get the first ended
      *
      * @return float|null
@@ -342,6 +374,7 @@ final class Profiler implements JsonSerializable
                 $this->end = $this->firstEnded;
                 $this->elapsed = $this->end - $this->start;
                 $this->endMemory = memory_get_usage(true);
+                $this->endPeakMemory = memory_get_peak_usage(true);
                 return $this;
             }
             if ($force && !$this->isLocked()) {
@@ -349,9 +382,10 @@ final class Profiler implements JsonSerializable
                 $this->mergeData($data);
                 $this->elapsed = $this->end - $this->start;
                 $this->endMemory = memory_get_usage(true);
+                $this->endPeakMemory = memory_get_peak_usage(true);
             }
         } finally {
-            $this->usedMemory ??= $this->endMemory > $this->startMemory
+            $this->memoryUsage ??= $this->endMemory > $this->startMemory
                 ? $this->endMemory - $this->startMemory
                 : 0;
         }
@@ -391,8 +425,8 @@ final class Profiler implements JsonSerializable
      */
     public function getMemoryUsage(): int
     {
-        if (isset($this->usedMemory)) {
-            return $this->usedMemory;
+        if (isset($this->memoryUsage)) {
+            return $this->memoryUsage;
         }
         $start = $this->getStartMemory();
         $end = $this->getEndMemory();
@@ -406,6 +440,8 @@ final class Profiler implements JsonSerializable
      *           "start" : int,
      *           "end" : int,
      *           "usage" : int,
+     *           "peak_start" : int,
+     *           "peak_end" : int,
      *      },
      *      "time": array{
      *           "start" : int,
@@ -425,6 +461,8 @@ final class Profiler implements JsonSerializable
                 'start' => $this->getStartMemory(),
                 'end' => $memoryUsage + $this->getStartMemory(),
                 'usage' => $memoryUsage,
+                'peak_start' => $this->getStartPeakMemory(),
+                'peak_end' => $this->getEndPeakMemory(),
             ],
             'time' => [
                 'start' => $this->getStartTime(),

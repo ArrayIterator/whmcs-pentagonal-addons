@@ -1,13 +1,15 @@
+// ------------------------------------------------------
+// RESETTER
+// ------------------------------------------------------
 @import "../variables/base";
 @import "../variables/colors";
 
 #{$selector-wrapper-body} {
     // manipulate all of the elements
-    > :not(:has(#{$selector-identity})) {
+    > :not(:has(#{$selector-identity})):not(.flex, [class*="block"], [class^="flex-"]) {
         display: none;
     }
 }
-
 #{$selector-div} {
     & {
         background-color: var(--pentagonal-base-body-bg-color, #fff);
@@ -306,5 +308,25 @@ html:has(#{$selector-identity}) {
 
     [hidden] {
         display: none !important;
+    }
+    .flex {
+        display: flex;
+    }
+    .flex-column {
+        display: flex;
+        flex-direction: column;
+    }
+    .flex-row {
+        display: flex;
+        flex-direction: row;
+    }
+    .block {
+        display: block;
+    }
+    .inline-block {
+        display: inline-block;
+    }
+    .fixed {
+        position: fixed;
     }
 }

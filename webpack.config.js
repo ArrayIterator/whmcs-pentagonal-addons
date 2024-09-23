@@ -140,8 +140,10 @@ const config = {
     module : {
         rules : [
             {
-                test : /\.ts?$/,
-                use : 'ts-loader',
+                test : /\.[jt]sx?$/,
+                use : {
+                    loader : 'babel-loader'
+                },
                 exclude : /node_modules/,
             },
             {
@@ -202,17 +204,7 @@ const config = {
                         }
                     },
                 ]
-            },
-            {
-                test : /\.js$/i,
-                exclude : /node_modules/,
-                use : {
-                    loader : 'babel-loader',
-                    options : {
-                        presets : ['@babel/preset-env']
-                    }
-                },
-            },
+            }
         ],
     }
 };

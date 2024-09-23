@@ -1,27 +1,20 @@
 import "../scss/pentagonal.scss";
+import {AddonUriDefinition, ComponentCallback} from "./types/definitions";
+import profiler from "./components/profiler";
 ((w: Window) : void => {
     const {
         document : d
     } = w;
-    // if (module && module.hot) {
-    //     // @ts-expect-error ignore
-    //     module.hot.accept();
-    // }
+
+    const components : Array<ComponentCallback> = [
+        profiler
+    ];
+
     // run app
     const run = () : void => {
         const baseURL = new URL(w.location.href);
         const pentagonal = d.getElementById('pentagonal-addon-section');
-        const pentagonal_definition_uri = w["pentagonal_definition_uri" as any] as unknown as {
-            addon_name : string;
-            addon_url : string;
-            addons_url : string;
-            admin_url : string;
-            base_url : string;
-            theme_url : string;
-            templates_url : string;
-            asset_url : string;
-            module_url : string;
-        };
+        const pentagonal_definition_uri = w["pentagonal_definition_uri" as any] as unknown as AddonUriDefinition;
         if (!pentagonal || !pentagonal_definition_uri || typeof pentagonal_definition_uri !== 'object') {
             return;
         }
@@ -43,7 +36,20 @@ import "../scss/pentagonal.scss";
         }
         setTimeout(() => {
             pentagonal?.classList.remove('pentagonal-addon-wait');
+            setTimeout(() => {
+                d.querySelector('.pentagonal-addon-wait-loader')?.remove();
+            }, 1000);
         }, 1000);
+
+        // call
+        while (components.length) {
+            try {
+                components.shift()(w, pentagonal_definition_uri);
+            } catch(e) {
+                // pass
+            }
+        }
     }
+
     ['complete', 'interactive'].includes(d.readyState) ? run() : w.addEventListener('DOMContentLoaded', run);
 })(window);

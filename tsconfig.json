@@ -5,6 +5,7 @@
     "target": "ES6",
     "module": "ES2020",
     "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
     "lib": [
       "ESNext",
       "dom"

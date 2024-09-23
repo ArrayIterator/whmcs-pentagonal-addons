@@ -48,7 +48,7 @@ class PluginSchema implements PluginSchemaInterface
      */
     public function getRefSchema(): ?ObjectItemContract
     {
-        return $this->refSchema ??= Schema::createSchemaReference(Plugin::class);
+        return $this->refSchema ??= $this->createSchemaByReferenceClassName(Plugin::class);
     }
 
     /**
