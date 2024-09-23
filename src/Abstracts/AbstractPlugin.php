@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Abstracts;
 
+use Pentagonal\Hub\Schema\Whmcs\Plugin;
+use Pentagonal\Neon\WHMCS\Addon\Dispatcher\AdminDispatcherHandler;
+use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherResponseInterface;
+use Pentagonal\Neon\WHMCS\Addon\Dispatcher\PluginDispatcher;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnsupportedArgumentDataTypeException;
@@ -10,10 +14,10 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
+use Pentagonal\Neon\WHMCS\Addon\Http\RequestResponseExceptions\NotFoundException;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\PluginInterface;
 use Pentagonal\Neon\WHMCS\Addon\Plugins;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 use Psr\Http\Message\UriInterface;
 use ReflectionClass;
 use ReflectionObject;
@@ -157,6 +161,14 @@ abstract class AbstractPlugin implements PluginInterface
         $performance = Performance::profile('load', 'plugin')
             ->setStopCode($stopCode);
         $this->initLoaded = true;
+        if ($this->getSchema()->isEnableAdminPage()) {
+            $this
+                ->getPlugins()
+                ->getCore()
+                ->getAdminDispatcher()
+                ->getHandler()
+                ->add(new PluginDispatcher($this));
+        }
         DataNormalizer::bufferedCall(function () {
             try {
                 $this->doLoad();
@@ -197,6 +209,44 @@ abstract class AbstractPlugin implements PluginInterface
     abstract protected function doLoad();
 
     /**
+     * @inheritDoc
+     * @abstract
+     */
+    public function getAddonPageOutput($vars, AdminDispatcherHandler $dispatcherHandler) : DispatcherResponseInterface
+    {
+        throw new NotFoundException(
+            $this->getPlugins()->getCore()->getRequest()
+        );
+    }
+
+    /**
+     * @inheritDoc
+     * @abstract
+     */
+    public function getApiOutput($vars, AdminDispatcherHandler $dispatcherHandler) : DispatcherResponseInterface
+    {
+        throw new NotFoundException(
+            $this->getPlugins()->getCore()->getRequest()
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isApiEnabled(): bool
+    {
+        return $this->getSchema()->isEnableAdminPage();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function isPageAddonEnabled(): bool
+    {
+        return $this->getSchema()->isEnableAdminPage();
+    }
+
+    /**
      * @return bool
      */
     final public function isInitLoaded(): bool
@@ -223,8 +273,9 @@ abstract class AbstractPlugin implements PluginInterface
     /**
      * @abstract called when __call called
      * @return mixed
+     * @noinspection PhpUnusedParameterInspection
      */
-    protected function doMagicCall($name, $arguments)
+    protected function doMagicCall(string $name, array $arguments)
     {
         return null;
     }

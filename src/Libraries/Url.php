@@ -305,6 +305,21 @@ final class Url
     }
 
     /**
+     * Get Plugin addon url
+     *
+     * @param AbstractPlugin $plugin
+     * @return ?string
+     */
+    public function getPluginAddonPageUrl(AbstractPlugin $plugin) : ?string
+    {
+        $path = $this->getCore()->getPlugins()->getPluginPathHash($plugin);
+        if (!$path) {
+            return null;
+        }
+        return $this->getAddonPageUrl($path);
+    }
+
+    /**
      * Get theme uri
      *
      * @return UriInterface
@@ -324,8 +339,8 @@ final class Url
      */
     public function getPluginUrl(AbstractPlugin $plugin) : string
     {
-        $path = $this->getCore()->getPlugins()->getPath($plugin);
-        return $this->getBaseUrl($path);
+        $path = $this->getCore()->getPlugins()->getPluginPath($plugin);
+        return $this->getBaseUrl($path??'');
     }
 
     /**

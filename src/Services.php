@@ -15,7 +15,6 @@ use Pentagonal\Neon\WHMCS\Addon\Libraries\EventManager;
 use Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel\ThemeSchema;
 use Pentagonal\Neon\WHMCS\Addon\Services\AdminService;
 use Pentagonal\Neon\WHMCS\Addon\Services\PluginService;
-use Pentagonal\Neon\WHMCS\Addon\Services\ThemeService;
 use ReflectionClass;
 use Throwable;
 use function file_exists;
@@ -68,7 +67,6 @@ class Services implements ServicesInterface
      */
     public const PROTECTED_SERVICES = [
         PluginService::class,
-        ThemeService::class,
         AdminService::class
     ];
 

@@ -116,14 +116,16 @@ class SmartyAdmin extends SmartyBC
         $admin_template = Options::get('admin_template');
         $original_template = $admin_template;
         $admin_template = is_string($admin_template) ? trim($admin_template) : null;
-        $admin_template = is_string($admin_template) && $admin_template !== '' && !preg_match('~[a-zA-Z_-]~', $admin_template) ? $admin_template : null;
+        $admin_template = is_string($admin_template)
+            && $admin_template !== ''
+            && !preg_match('~[a-zA-Z_-]~', $admin_template) ? $admin_template : null;
         if (!is_string($admin_template)) {
             $admin_template = 'pentagonal';
         }
 
         $templatesDir = realpath($templatesDir)?:$templatesDir;
         $templatesDir = rtrim(DataNormalizer::makeUnixSeparator($templatesDir), '/');
-        if ($admin_template !== 'pentagonal' && !is_dir( "$templatesDir/$admin_template")) {
+        if ($admin_template !== 'pentagonal' && !is_dir("$templatesDir/$admin_template")) {
             $admin_template = 'pentagonal'; // fallback
         }
         if ($original_template !== $admin_template) {
@@ -271,13 +273,20 @@ class SmartyAdmin extends SmartyBC
         }
         try {
             if (!isset($this->registered_plugins[Smarty::PLUGIN_MODIFIER]['sprintf2'])) {
-                $this->registerPlugin(Smarty::PLUGIN_MODIFIER, "sprintf2", ["WHMCS\\Smarty", "sprintf2Modifier"]);
+                $this->registerPlugin(
+                    Smarty::PLUGIN_MODIFIER,
+                    "sprintf2",
+                    ["WHMCS\\Smarty", "sprintf2Modifier"]
+                );
             }
             if (!isset($this->registered_plugins[Smarty::PLUGIN_FUNCTION]['lang'])) {
                 $this->registerPlugin(Smarty::PLUGIN_FUNCTION, "lang", ["WHMCS\\Smarty", "langFunction"]);
             }
             if (!isset($this->registered_plugins[Smarty::FILTER_PRE]["WHMCS\\Smarty"])) {
-                $this->registerFilter(Smarty::FILTER_PRE, ["WHMCS\\Smarty", "preFilterSmartyTemplateVariableScopeResolution"]);
+                $this->registerFilter(
+                    Smarty::FILTER_PRE,
+                    ["WHMCS\\Smarty", "preFilterSmartyTemplateVariableScopeResolution"]
+                );
             }
             $policy = Di::getFacadeApplication()->make("WHMCS\\Smarty\\Security\\Policy", [$this, 'system']);
             $this->enableSecurity($policy);
@@ -357,7 +366,11 @@ HTML);
             try {
                 $html .= ('<div id="pentagonal-addon-header" class="pentagonal-addon-header">');
                 if ($this->templateExists($this->headerTemplate)) {
-                    $html .= DataNormalizer::bufferedCall(function (string $stopCode, EventManagerInterface $em, string $headerTemplate) {
+                    $html .= DataNormalizer::bufferedCall(function (
+                        string $stopCode,
+                        EventManagerInterface $em,
+                        string $headerTemplate
+                    ) {
                         Logger::debug(sprintf('Loading header template: %s', $headerTemplate), [
                             'template' => $headerTemplate
                         ]);
@@ -412,7 +425,11 @@ HTML);
             $contentTemplate = $this->getContentTemplate();
             try {
                 if ($this->templateExists($contentTemplate)) {
-                    $html .= DataNormalizer::bufferedCall(function (string $stopCode, EventManagerInterface $em, string $contentTemplate) {
+                    $html .= DataNormalizer::bufferedCall(function (
+                        string $stopCode,
+                        EventManagerInterface $em,
+                        string $contentTemplate
+                    ) {
                         Logger::debug(sprintf('Loading content template: %s', $contentTemplate), [
                             'template' => $contentTemplate
                         ]);
@@ -467,7 +484,11 @@ HTML);
             $footerTemplate = $this->getFooterTemplate();
             try {
                 if ($this->templateExists($footerTemplate)) {
-                    $html .= DataNormalizer::bufferedCall(function (string $stopCode, EventManagerInterface $em, string $footerTemplate) {
+                    $html .= DataNormalizer::bufferedCall(function (
+                        string $stopCode,
+                        EventManagerInterface $em,
+                        string $footerTemplate
+                    ) {
                         Logger::debug(sprintf('Loading footer template: %s', $footerTemplate), [
                             'template' => $footerTemplate
                         ]);

@@ -191,7 +191,7 @@ class DatabaseWriter implements LogWriterInterface
             }
 
             // SELECT * FROM information_schema.tables WHERE table_schema
-            //  = 'tablename' and TABLE_NAME = 'pentagonal_record_logs';
+            //  = 'table_name' and TABLE_NAME = 'pentagonal_record_logs';
             try {
                 $count = Capsule::table('information_schema.tables')
                     ->select('TABLE_ROWS')

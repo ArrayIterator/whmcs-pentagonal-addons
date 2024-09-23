@@ -7,6 +7,7 @@ use ArrayAccess;
 use ArrayIterator;
 use ArrayObject;
 use IteratorAggregate;
+use Pentagonal\Hub\Schema\Whmcs\Plugin;
 use Pentagonal\Neon\WHMCS\Addon\Abstracts\AbstractPlugin;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnexpectedValueException;
@@ -17,7 +18,6 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\Options;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel\PluginSchema;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 use ReflectionClass;
 use RuntimeException;
 use Throwable;
@@ -32,6 +32,7 @@ use function is_bool;
 use function is_file;
 use function is_int;
 use function is_string;
+use function md5;
 use function realpath;
 use function sprintf;
 use function str_starts_with;
@@ -74,6 +75,11 @@ class Plugins implements IteratorAggregate
      * @var ArrayAccess<string, AbstractPlugin> $plugins Plugins
      */
     protected ArrayAccess $plugins;
+
+    /**
+     * @var ArrayAccess<string, string> $pluginPathHash the hash
+     */
+    protected ArrayAccess $pluginPathHash;
 
     /**
      * @var bool $isAllowedToLoad
@@ -125,6 +131,7 @@ class Plugins implements IteratorAggregate
     public function __construct(Core $core)
     {
         $this->plugins = new ArrayObject();
+        $this->pluginPathHash = new ArrayObject();
         $this->core = $core;
         $this->rootDir = DataNormalizer::makeUnixSeparator(ROOTDIR . '/');
         $pluginSchema = $this
@@ -219,7 +226,10 @@ class Plugins implements IteratorAggregate
         if (!str_starts_with($plugin->getPluginDirectory(), $this->rootDir)) {
             return false;
         }
-        $pathOnly = $this->getPath($plugin);
+        $pathOnly = $this->getPluginPath($plugin);
+        if (!$pathOnly) {
+            return false;
+        }
         return isset($this->getActivePluginsOptions()[$pathOnly]) && !$plugin->getLoadError();
     }
 
@@ -287,7 +297,7 @@ class Plugins implements IteratorAggregate
                     )
                 );
             }
-            $object =  new $className($this, $this->pluginSchemas[$pathOnly], $ref);
+            $object = new $className($this, $this->pluginSchemas[$pathOnly], $ref);
         } finally {
             $performance->stop([], $stopCode);
         }
@@ -357,7 +367,6 @@ class Plugins implements IteratorAggregate
                 }
             }
         }
-
         $activeOptions = $this->getActivePluginsOptions();
         uasort($activeOptions, function ($a, $b) {
             return $a['time'] <=> $b['time'];
@@ -457,7 +466,10 @@ class Plugins implements IteratorAggregate
                 continue;
             }
             $process = true;
-            $pathOnly = $this->getPath($plugin);
+            $pathOnly = $this->getPluginPath($plugin);
+            if (!$pathOnly) {
+                continue;
+            }
             $hasActive = isset($this->activePluginsOptions[$pathOnly]);
             $this->activePluginsOptions[$pathOnly] = [
                 'name' => $plugin->getSchema()->getName(),
@@ -515,7 +527,10 @@ class Plugins implements IteratorAggregate
         if ($plugin->getLoadError()) {
             return false;
         }
-        $path = $this->getPath($plugin);
+        $path = $this->getPluginPath($plugin);
+        if (!$path) {
+            return false;
+        }
         if ($plugin->isLoaded()) {
             return isset($this->getActivePluginsOptions()[$path]);
         }
@@ -529,11 +544,22 @@ class Plugins implements IteratorAggregate
      * @param AbstractPlugin $plugin
      * @return string
      */
-    public function getPath(AbstractPlugin $plugin) : string
+    public function getPluginPath(AbstractPlugin $plugin) : ?string
     {
-        return DataNormalizer::makeUnixSeparator(
-            trim(substr($plugin->getPluginDirectory(), strlen($this->rootDir)), '/')
-        );
+        return $this->getPath($plugin->getPluginDirectory());
+    }
+
+    /**
+     * @param string $path
+     * @return ?string
+     */
+    public function getPath(string $path) : ?string
+    {
+        $path = DataNormalizer::makeUnixSeparator(realpath($path)??$path);
+        if (!str_starts_with($path, $this->rootDir)) {
+            return null;
+        }
+        return trim(substr($path, strlen($this->rootDir)), '/');
     }
 
     /**
@@ -566,11 +592,30 @@ class Plugins implements IteratorAggregate
      */
     public function add(AbstractPlugin $plugin)
     {
-        $path = $this->getPath($plugin);
-        if (isset($this->plugins[$path]) && $this->plugins[$path]->isLoaded()) {
+        $path = $this->getPluginPath($plugin);
+        if (!$path || isset($this->plugins[$path]) && $this->plugins[$path]->isLoaded()) {
             return;
         }
+        $hash = $this->getPluginPathHash($plugin);
         $this->plugins[$path] = $plugin;
+        $this->pluginPathHash[$hash] = $path;
+    }
+
+    /**
+     * Get plugin path hash
+     *
+     * @param AbstractPlugin $plugin
+     * @return string
+     */
+    public function getPluginPathHash(AbstractPlugin $plugin) : ?string
+    {
+        $path = $this->getPluginPath($plugin);
+        if (!$path) {
+            return null;
+        }
+        $hash = md5(get_class($plugin));
+        $this->pluginPathHash[$hash] = $path;
+        return $hash;
     }
 
     /**
@@ -590,6 +635,18 @@ class Plugins implements IteratorAggregate
                 break;
             }
         }
+    }
+
+    /**
+     * Get plugin by hash
+     *
+     * @param string $hash
+     * @return ?AbstractPlugin|
+     */
+    public function getPluginByHash(string $hash) : ?AbstractPlugin
+    {
+        $path = $this->pluginPathHash[$hash]??null;
+        return $path ? ($this->plugins[$hash]??null) : null;
     }
 
     /**

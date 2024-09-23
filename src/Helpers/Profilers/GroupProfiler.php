@@ -103,7 +103,7 @@ final class GroupProfiler implements Countable, IteratorAggregate, JsonSerializa
     }
 
     /**
-     * Check if has profiler
+     * Check if object has profiler
      *
      * @param Profiler $profiler
      * @return bool

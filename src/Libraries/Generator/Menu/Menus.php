@@ -353,7 +353,6 @@ class Menus implements Stringable, IteratorAggregate
      * @param int $maxDepth
      * @param array $attributes
      * @return string
-     * @noinspection DuplicatedCode
      */
     public function display(
         ?ServerRequestInterface $request = null,

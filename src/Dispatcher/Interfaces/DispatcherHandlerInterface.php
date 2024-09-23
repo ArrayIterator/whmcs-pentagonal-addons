@@ -11,9 +11,10 @@ interface DispatcherHandlerInterface
      * Is processable
      *
      * @param $vars
+     * @param AdminDispatcherHandler $dispatcherHandler
      * @return bool
      */
-    public function isProcessable($vars) : bool;
+    public function isProcessable($vars, AdminDispatcherHandler $dispatcherHandler) : bool;
 
     /**
      * Process dispatcher
@@ -25,16 +26,21 @@ interface DispatcherHandlerInterface
     public function process($vars, AdminDispatcherHandler $dispatcherHandler);
 
     /**
-     * Get page
-     *
      * @return string
      */
-    public function getRoutePath() : string;
+    public function getName() : string;
+
+    /**
+     * Get page
+     *
+     * @return ?string
+     */
+    public function getPath() : ?string;
 
     /**
      * Make rule if it case-sensitive
      *
      * @return bool
      */
-    public function isCaseSensitivePage() : bool;
+    public function isCaseSensitivePath() : bool;
 }

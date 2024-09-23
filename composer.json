@@ -7,9 +7,10 @@
     "require": {
         "php": ">=7.4",
         "ext-json": "*",
+        "ext-pdo": "*",
         "psr/http-message": "^1.0.1",
         "swaggest/json-schema": "^0.12.42",
-        "ext-pdo": "*"
+        "pentagonal/hub": "dev-main"
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^3.10.3",

@@ -215,7 +215,7 @@ abstract class AbstractMenu
     }
 
     /**
-     * Check if has menu
+     * Check if object has menu
      *
      * @param string $menuId
      * @return bool

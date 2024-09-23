@@ -16,6 +16,7 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\Profilers\Profiler;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\SessionFlash;
 use Pentagonal\Neon\WHMCS\Addon\Http\Code;
+use Pentagonal\Neon\WHMCS\Addon\Http\RequestResponseExceptions\NotFoundException;
 use Pentagonal\Neon\WHMCS\Addon\Http\ResponseEmitter;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\EventManagerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Libraries\Generator\Menu\Menus;
@@ -56,11 +57,6 @@ class AdminDispatcher
      * @var string TYPE_SELECTOR the type of admin page
      */
     public const TYPE_SELECTOR = 'type';
-
-    /**
-     * @var string PLUGIN_SELECTOR the plugin selector
-     */
-    public const PLUGIN_SELECTOR = 'type';
 
     /**
      * @var string EVENT_ADDON_ADMIN_BEFORE_RENDER before render
@@ -357,7 +353,14 @@ class AdminDispatcher
                         ->createStream((string) $body);
                     $response = $response->withBody($body);
                 }
-                $this->emitDataJsonData($response->getStatusCode(), $response, $jsonOption, $is_debug, $performance, $stopCode);
+                $this->emitDataJsonData(
+                    $response->getStatusCode(),
+                    $response,
+                    $jsonOption,
+                    $is_debug,
+                    $performance,
+                    $stopCode
+                );
             } else {
                 $response = new DispatcherResponse(500, null, new RuntimeException(
                     'Invalid response content from response interface'
@@ -385,8 +388,14 @@ class AdminDispatcher
      * @param string $stopCode
      * @return never-returns
      */
-    private function emitDataJsonData(int $code, $data, int $jsonOption, bool $is_debug, Profiler $profiler, string $stopCode)
-    {
+    private function emitDataJsonData(
+        int $code,
+        $data,
+        int $jsonOption,
+        bool $is_debug,
+        Profiler $profiler,
+        string $stopCode
+    ) {
         $response = $data instanceof ResponseInterface ? $data : $this
             ->getCore()
             ->getHttpFactory()
@@ -417,32 +426,49 @@ class AdminDispatcher
         $emitter = new ResponseEmitter();
         try {
             $emitter->emit($response);
-            $emitter->close();
         } catch (Throwable $e) {
             if (!headers_sent()) {
                 header('Content-Type: ' . $contentType, true, $response->getStatusCode());
             }
-            /** @noinspection DuplicatedCode */
-            $content = [
-                'code' => $code,
-                'message' => DataNormalizer::protectRootDir($data->getMessage())
-            ];
-            if ($is_debug) {
-                $traces = [];
-                foreach ($data->getTrace() as $trace) {
-                    if (count($trace) >= 50) {
-                        break;
-                    }
-                    $traces[] = DataNormalizer::protectRootDir($trace);
-                }
-                $content['trace'] = $traces;
-            }
+            $content = $this->formatResponseError($code, $data, $is_debug);
             $profiler->stop([
                 'code' => $stopCode
-            ]);
+            ], $stopCode);
             echo json_encode($content, $jsonOption);
+        } finally {
+            $profiler->stop([
+                'code' => $stopCode
+            ], $stopCode);
+            $emitter->close();
         }
         exit(0);
+    }
+
+    /**
+     * Format response error
+     *
+     * @param int $code
+     * @param Throwable $data
+     * @param bool $is_debug
+     * @return array
+     */
+    private function formatResponseError(int $code, Throwable $data, bool $is_debug) : array
+    {
+        $content = [
+            'code' => $code,
+            'message' => DataNormalizer::protectRootDir($data->getMessage())
+        ];
+        if ($is_debug) {
+            $traces = [];
+            foreach ($data->getTrace() as $trace) {
+                if (count($trace) >= 50) {
+                    break;
+                }
+                $traces[] = DataNormalizer::protectRootDir($trace);
+            }
+            $content['trace'] = $traces;
+        }
+        return $content;
     }
 
     /**
@@ -462,20 +488,7 @@ class AdminDispatcher
         Profiler $profiler,
         string $stopCode
     ) {
-        $content = [
-            'code' => $code,
-            'message' => DataNormalizer::protectRootDir($data->getMessage())
-        ];
-        if ($is_debug) {
-            $traces = [];
-            foreach ($data->getTrace() as $trace) {
-                if (count($trace) >= 50) {
-                    break;
-                }
-                $traces[] = DataNormalizer::protectRootDir($trace);
-            }
-            $content['trace'] = $traces;
-        }
+        $content = $this->formatResponseError($code, $data, $is_debug);
         $profiler->end(false, [
             'error' => $data,
             'code' => $code
@@ -484,7 +497,7 @@ class AdminDispatcher
         $em = $this->getCore()->getEventManager();
         try {
             $newContent = $em->apply(self::EVENT_ADMIN_OUTPUT_API_DATA, $content, $code);
-            if (!is_array($content)
+            if (!is_array($newContent)
                 || ($newContent['code']??null) !== $code
                 || !array_key_exists('message', $content)) {
                 $newContent = $content;
@@ -518,8 +531,14 @@ class AdminDispatcher
      * @param string $stopCode
      * @return never-returns
      */
-    private function serveSuccess(int $code, $data, int $jsonOption, bool $is_debug, Profiler $performance, string $stopCode)
-    {
+    private function serveSuccess(
+        int $code,
+        $data,
+        int $jsonOption,
+        bool $is_debug,
+        Profiler $performance,
+        string $stopCode
+    ) {
         if ($data instanceof DispatcherResponseInterface) {
             $response = [
                 'code' => $data->getStatusCode(),
@@ -647,14 +666,15 @@ class AdminDispatcher
         $smarty->assign('is_route_handled', !$error);
         $smarty->assign('route_query', $this->getRouteQuery());
         $smarty->assign('flash', SessionFlash::current());
-        $smarty->assign('is_first_activation',
+        $smarty->assign(
+            'is_first_activation',
             SessionFlash::get(Addon::SESSION_WELCOME_FLASH_NAME) === true
             && ($_GET['ref']??null) === 'welcome'
         );
 
         // error template
         $errorTemplate = 'error.tpl';
-        if ($error instanceof HandlerNotFoundException) {
+        if ($error instanceof HandlerNotFoundException || $error instanceof NotFoundException) {
             Logger::info('Rendering admin not handled', [
                 'status' => 'notfound',
                 'route' => $this->getRouteQuery(),

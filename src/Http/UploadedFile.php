@@ -8,7 +8,6 @@ use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableDataException;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnprocessableException;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UploadedFileInterface;
-use RuntimeException;
 use function fclose;
 use function fopen;
 use function fwrite;

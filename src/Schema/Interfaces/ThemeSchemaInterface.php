@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces;
 
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Themes;
+use Pentagonal\Hub\Schema\Whmcs\Theme;
 
 interface ThemeSchemaInterface extends SingleSchemaInterface
 {
     /**
-     * @return ?Themes
+     * @return ?Theme
      */
-    public function getSchema(): ?Themes;
+    public function getSchema(): ?Theme;
 
     /**
      * Get the schema source keyof : $schema
@@ -113,7 +113,7 @@ interface ThemeSchemaInterface extends SingleSchemaInterface
     /**
      * Get metadata
      *
-     * @return object|stdClass
+     * @return array
      */
     public function getMetadata() : array;
 

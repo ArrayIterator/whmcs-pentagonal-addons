@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Traits;
 
-use Pentagonal\Neon\WHMCS\Addon\Schema\Abstracts\AbstractStructure;
+use Pentagonal\Hub\Abstracts\AbstractSchemaStructure;
+use Swaggest\JsonSchema\Structure\ClassStructure;
 use Throwable;
 use function is_array;
 use function is_bool;
@@ -16,9 +17,9 @@ trait SingleSchemaTrait
     use SchemaTrait;
 
     /**
-     * @var ?AbstractStructure $schema the schema
+     * @var ?ClassStructure $schema the schema
      */
-    protected ?AbstractStructure $schema = null;
+    protected ?ClassStructure $schema = null;
 
     /**
      * @var array $schemaArray the schema array
@@ -44,7 +45,7 @@ trait SingleSchemaTrait
             return $this->valid;
         }
         $className = $this->getSchemaClassName();
-        if (!$className || !is_subclass_of($className, AbstractStructure::class, true)) {
+        if (!$className || !is_subclass_of($className, AbstractSchemaStructure::class, true)) {
             return false;
         }
         $schema = $this->getSchema();
@@ -52,7 +53,7 @@ trait SingleSchemaTrait
     }
 
     /**
-     * @return class-string<AbstractStructure>
+     * @return class-string<AbstractSchemaStructure>
      */
     abstract public function getSchemaClassName(): string;
 
@@ -75,7 +76,7 @@ trait SingleSchemaTrait
     /**
      * Get schema from file
      */
-    public function getSchema() : ?AbstractStructure
+    public function getSchema() : ?ClassStructure
     {
         if ($this->schemaInit) {
             if (!$this->schema) {

@@ -8,7 +8,6 @@ use Pentagonal\Neon\WHMCS\Addon\Helpers\Logger;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Performance;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\Random;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\StaticInclude;
-use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaHeadOutput;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\AdminAreaHook;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\ThemeSetting;
 use Pentagonal\Neon\WHMCS\Addon\Hooks\VersionHook;
@@ -57,7 +56,6 @@ final class Hooks implements HooksInterface
     public const HOOK_FACTORIES = [
         VersionHook::class,
         ThemeSetting::class,
-        AdminAreaHeadOutput::class,
         AdminAreaHook::class,
     ];
 

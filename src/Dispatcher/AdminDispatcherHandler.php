@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Dispatcher;
 
+use ArrayIterator;
+use IteratorAggregate;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherHandlerApiInterface;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherHandlerInterface;
 use Pentagonal\Neon\WHMCS\Addon\Dispatcher\Interfaces\DispatcherResponseInterface;
@@ -14,6 +16,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use SplObjectStorage;
 use Throwable;
+use Traversable;
 use function is_object;
 use function is_string;
 use function iterator_to_array;
@@ -23,7 +26,10 @@ use function ob_get_level;
 use function str_ends_with;
 use function strtolower;
 
-class AdminDispatcherHandler
+/**
+ * @template-implements Traversable<DispatcherHandlerInterface>
+ */
+class AdminDispatcherHandler implements IteratorAggregate
 {
     /**
      * @var AdminDispatcher $adminDispatcher the admin dispatcher
@@ -206,10 +212,14 @@ class AdminDispatcherHandler
      */
     public function isProcessable(DispatcherHandlerInterface $handler, $vars) : bool
     {
+        $routePath = $handler->getPath();
+        if ($routePath === null) {
+            return false;
+        }
         $isApi = $this->getAdminDispatcher()->isApiRequest();
         $routeQ = $this->getAdminDispatcher()->getRouteQuery();
-        $handlerPage = trim($handler->getRoutePath(), '/');
-        $isCaseSensitive = $handler->isCaseSensitivePage();
+        $handlerPage = trim($routePath, '/');
+        $isCaseSensitive = $handler->isCaseSensitivePath();
         $lowerPage = is_string($routeQ) ? strtolower($routeQ) : $routeQ;
         if ($handlerPage !== '*') { // process if *
             if ($isCaseSensitive) {
@@ -221,7 +231,7 @@ class AdminDispatcherHandler
             }
         }
 
-        return $handler->isProcessable($vars) && (
+        return $handler->isProcessable($vars, $this) && (
             !$isApi && !$handler instanceof DispatcherHandlerApiInterface
             || $isApi && $handler instanceof DispatcherHandlerApiInterface
         );
@@ -257,7 +267,11 @@ class AdminDispatcherHandler
                 continue;
             }
             $handled = true;
-            return DataNormalizer::bufferedCall(function (DispatcherHandlerInterface $handler, $vars, int $level) use (&$error) {
+            return DataNormalizer::bufferedCall(function (
+                DispatcherHandlerInterface $handler,
+                $vars,
+                int $level
+            ) use (&$error) {
                 try {
                     $result = $handler->process($vars, $this);
                 } catch (Throwable $e) {
@@ -285,5 +299,14 @@ class AdminDispatcherHandler
         );
         $this->setMessage('error', 'No handler found for page ' . $page);
         return false;
+    }
+
+    /**
+     * @template-implements Traversable<DispatcherHandlerInterface>
+     * @return Traversable<DispatcherHandlerInterface>
+     */
+    public function getIterator() : Traversable
+    {
+        return new ArrayIterator($this->getHandlers());
     }
 }

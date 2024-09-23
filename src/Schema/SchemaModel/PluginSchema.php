@@ -1,15 +1,15 @@
 <?php
-/** @noinspection PhpFullyQualifiedNameUsageInspection */
 declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel;
 
+use Pentagonal\Hub\Schema;
+use Pentagonal\Hub\Schema\Whmcs\Plugin;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\InvalidArgumentCriteriaException;
 use Pentagonal\Neon\WHMCS\Addon\Exceptions\UnsupportedArgumentDataTypeException;
 use Pentagonal\Neon\WHMCS\Addon\Helpers\DataNormalizer;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\PluginInterface;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\PluginSchemaInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaTrait;
 use ReflectionObject;
 use Swaggest\JsonSchema\Structure\ObjectItemContract;
@@ -17,8 +17,6 @@ use function array_keys;
 use function dirname;
 use function file_exists;
 use function get_class;
-use function realpath;
-use const DIRECTORY_SEPARATOR;
 
 class PluginSchema implements PluginSchemaInterface
 {
@@ -42,10 +40,7 @@ class PluginSchema implements PluginSchemaInterface
 
     public function getRefSchemaFile(): string
     {
-        $file = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'schema' . DIRECTORY_SEPARATOR . 'plugin.json';
-        return $this->refSchemaFile ??= file_exists($file)
-            ? (realpath($file)?:$file)
-            :  Plugin::ID;
+        return $this->refSchemaFile ??= Schema::determineInternalSchemaURL(Plugin::class);
     }
 
     /**
@@ -53,7 +48,7 @@ class PluginSchema implements PluginSchemaInterface
      */
     public function getRefSchema(): ?ObjectItemContract
     {
-        return $this->refSchema ??= Plugin::schema()->exportSchema();
+        return $this->refSchema ??= Schema::createSchemaReference(Plugin::class);
     }
 
     /**
@@ -75,14 +70,14 @@ class PluginSchema implements PluginSchemaInterface
      */
     public function getSchemaPlugin(string $pluginDirectory) : Plugin
     {
-        $schemaFile = DataNormalizer::makeUnixSeparator($pluginDirectory .'/plugin.json');
-        if (isset(self::$schemaLists[$schemaFile])) {
-            return clone self::$schemaLists[$schemaFile];
-        }
+        $schemaFile = DataNormalizer::makeUnixSeparator($pluginDirectory . '/plugin.json');
         if (!file_exists($schemaFile)) {
             throw new InvalidArgumentCriteriaException(
-                'Schema file plugin.json does not exists'
+                'Schema file for plugin does not exists'
             );
+        }
+        if (isset(self::$schemaLists[$schemaFile])) {
+            return clone self::$schemaLists[$schemaFile];
         }
         self::$schemaLists[$schemaFile] = $this->createSchemaStructureFor($schemaFile, Plugin::class);
         return clone self::$schemaLists[$schemaFile];
@@ -107,10 +102,10 @@ class PluginSchema implements PluginSchemaInterface
                 sprintf('Plugin object: %s does not have path', $className)
             );
         }
-        $schemaFile = DataNormalizer::makeUnixSeparator($path .'/plugin.json');
-        self::$pluginJsonPath[$className] = $schemaFile;
-        if (isset(self::$schemaLists[$schemaFile])) {
-            return clone self::$schemaLists[$schemaFile];
+        $path = DataNormalizer::makeUnixSeparator(dirname($path) . '/plugin.json');
+        self::$pluginJsonPath[$className] = $path;
+        if (isset(self::$schemaLists[$path])) {
+            return clone self::$schemaLists[$path];
         }
         return $this->getSchemaPlugin($path);
     }

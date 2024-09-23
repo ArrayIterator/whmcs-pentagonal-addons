@@ -1,5 +1,4 @@
 <?php
-/** @noinspection PhpComposerExtensionStubsInspection */
 declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Extended;

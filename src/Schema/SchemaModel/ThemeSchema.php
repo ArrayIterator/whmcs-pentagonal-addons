@@ -3,15 +3,12 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\SchemaModel;
 
+use Pentagonal\Hub\Schema;
+use Pentagonal\Hub\Schema\Whmcs\Theme;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces\ThemeSchemaInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Themes;
 use Pentagonal\Neon\WHMCS\Addon\Schema\Traits\SchemaThemeTrait;
 use Swaggest\JsonSchema\Structure\ObjectItemContract;
-use function dirname;
-use function file_exists;
 use function is_bool;
-use function realpath;
 use const DIRECTORY_SEPARATOR;
 
 class ThemeSchema implements ThemeSchemaInterface
@@ -35,7 +32,7 @@ class ThemeSchema implements ThemeSchemaInterface
      */
     public function getSchemaClassName(): string
     {
-        return Themes::class;
+        return Theme::class;
     }
 
     /**
@@ -43,16 +40,16 @@ class ThemeSchema implements ThemeSchemaInterface
      */
     public function getRefSchema(): ?ObjectItemContract
     {
-        return $this->refSchema ??= Themes::schema()->exportSchema();
+        return $this->refSchema ??= Schema::createSchemaReference(Theme::class);
     }
 
     /**
-     * @return ?Themes
+     * @return ?Theme
      */
-    public function getSchema(): ?Themes
+    public function getSchema(): ?Theme
     {
         $schema = $this->getSchemaTrait();
-        if ($schema instanceof Themes) {
+        if ($schema instanceof Theme) {
             return $schema;
         }
         return null;
@@ -63,7 +60,7 @@ class ThemeSchema implements ThemeSchemaInterface
      */
     public function getSchemaSource(): string
     {
-        return $this->get('$schema')??Plugin::ID;
+        return $this->get('$schema')??Schema::determineInternalSchemaURL(Theme::class);
     }
 
     /**
@@ -175,7 +172,7 @@ class ThemeSchema implements ThemeSchemaInterface
      */
     public function getMetadata(): array
     {
-        return $this->get('metadata')??[];
+        return (array) ($this->get('metadata')??[]);
     }
 
     /**
@@ -244,9 +241,6 @@ class ThemeSchema implements ThemeSchemaInterface
      */
     public function getRefSchemaFile(): string
     {
-        $file = dirname(__DIR__, 3) . DIRECTORY_SEPARATOR . 'schema' . DIRECTORY_SEPARATOR . 'options+themes.json';
-        return $this->refSchemaFile ??= file_exists($file)
-            ? (realpath($file)?:$file)
-            :  Themes::ID;
+        return $this->refSchemaFile ??= Schema::determineInternalSchemaURL(Theme::class);
     }
 }

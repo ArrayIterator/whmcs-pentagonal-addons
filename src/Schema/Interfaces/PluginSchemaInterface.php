@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Pentagonal\Neon\WHMCS\Addon\Schema\Interfaces;
 
+use Pentagonal\Hub\Schema\Whmcs\Plugin;
 use Pentagonal\Neon\WHMCS\Addon\Interfaces\PluginInterface;
-use Pentagonal\Neon\WHMCS\Addon\Schema\Structures\Plugin;
 
 interface PluginSchemaInterface extends JsonSchemaInterface
 {
